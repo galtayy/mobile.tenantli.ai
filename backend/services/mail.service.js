@@ -15,60 +15,39 @@ const createTransporter = () => {
   console.log('User:', process.env.EMAIL_USER);
   console.log('From:', process.env.EMAIL_FROM);
   
-  // Eğer SMTP_SERVICE değişkeni tanımlanmışsa, service-based yapılandırma kullan
-  if (process.env.SMTP_SERVICE) {
-    console.log('Servis bazlı SMTP kullanılıyor:', process.env.SMTP_SERVICE);
-    return nodemailer.createTransport({
-      service: process.env.SMTP_SERVICE,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
-      },
-      debug: process.env.NODE_ENV !== 'production',
-      logger: process.env.NODE_ENV !== 'production'
-    });
-  }
-  
   // Ana config'i oluştur
   const config = {
     host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT, 10),
-    secure: process.env.EMAIL_SECURE === 'true', // .env'den doğrudan secure değerini al
+    secure: process.env.EMAIL_SECURE === 'true' || parseInt(process.env.EMAIL_PORT, 10) === 465, // .env'den veya port numarasına göre SSL etkinleştir
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
     },
-    debug: process.env.NODE_ENV !== 'production', // Debug mod
-    logger: process.env.NODE_ENV !== 'production', // Logger aktif
+    debug: true, // Her zaman debug mod aktif
+    logger: true, // Her zaman logger aktif
+    connectionTimeout: 60000, // 60 saniye bağlantı zaman aşımı
+    greetingTimeout: 30000, // 30 saniye karşılama zaman aşımı
+    socketTimeout: 60000, // 60 saniye soket zaman aşımı
     tls: {
-      // TLS yapılandırması
+      // Eski SSL/TLS yapılandırmalarını kabul et
       rejectUnauthorized: false,
-      minVersion: 'TLSv1', 
+      minVersion: 'TLSv1', // TLSv1.2 yerine TLSv1 kullan
       maxVersion: 'TLSv1.3',
-      ciphers: 'HIGH:MEDIUM:!aNULL:!MD5:!RC4',
-      secureOptions: require('constants').SSL_OP_LEGACY_SERVER_CONNECT
+      ciphers: 'HIGH:MEDIUM:!aNULL:!MD5:!RC4', // Daha geniş şifreleme seti
+      secureOptions: require('constants').SSL_OP_LEGACY_SERVER_CONNECT // Legacy server bağlantısına izin ver
     }
   };
   
-  // Port 587 için özel STARTTLS yapılandırması
-  if (parseInt(process.env.EMAIL_PORT, 10) === 587) {
-    console.log('Port 587 için STARTTLS ayarları yapılandırılıyor...');
+  // Özel mail sunucusuna yönelik optimizasyonlar
+  if (process.env.EMAIL_HOST.includes('kurumsaleposta')) {
+    console.log('Kurumsal e-posta sunucusu için ek yapılandırma uygulanıyor...');
+    config.pool = false; // Bağlantı havuzunu kapat
+    config.disableFileAccess = true; // Dosya erişimini devre dışı bırak (güvenlik)
+    config.secure = true; // Her zaman için SSL kullan
     config.requireTLS = true; // TLS kullanımını zorunlu kıl
     config.opportunisticTLS = true; // Mümkün olduğunda TLS kullan
   }
-  
-  // NOT: Port 587 için özel yapılandırmayı kaldırdık çünkü zaten genel TLS ayarı tanımladık
-  // Artık tls options temel konf. içinde yer alıyor
-  /*
-  if (parseInt(process.env.EMAIL_PORT, 10) === 587) {
-    // STARTTLS için (587 portu)
-    config.requireTLS = true;
-    config.tls = {
-      rejectUnauthorized: process.env.NODE_ENV === 'production', // Geliştirme ortamında sertifika doğrulamasını atla
-      minVersion: 'TLSv1.2'
-    };
-  }
-  */
   
   console.log('Mail transporter konfigürasyonu:', JSON.stringify({
     ...config,
@@ -90,6 +69,7 @@ const sendEmail = async (options) => {
     console.log('Transport ayarları:', {
       host: process.env.EMAIL_HOST,
       port: process.env.EMAIL_PORT,
+      secure: process.env.EMAIL_SECURE === 'true' || parseInt(process.env.EMAIL_PORT, 10) === 465,
       auth: {
         user: process.env.EMAIL_USER,
         pass: '********' // Güvenlik için şifre gizlendi
@@ -220,7 +200,7 @@ const sendReportApprovalNotification = async (recipient, reportDetails) => {
           <!-- Footer -->
           <div style="background-color: #F3F4F6; padding: 20px; text-align: center;">
             <p style="color: #515964; font-size: 14px; margin: 0 0 8px 0;">
-              Thank you for using tenantli!
+              Thank you for using DepositShield!
             </p>
             <p style="color: #515964; font-size: 12px; margin: 0;">
               This is an automated message. Please do not reply to this email.
@@ -336,7 +316,7 @@ const sendReportRejectionNotification = async (recipient, reportDetails) => {
           <!-- Footer -->
           <div style="background-color: #F3F4F6; padding: 20px; text-align: center;">
             <p style="color: #515964; font-size: 14px; margin: 0 0 8px 0;">
-              Thank you for using tenantli!
+              Thank you for using DepositShield!
             </p>
             <p style="color: #515964; font-size: 12px; margin: 0;">
               This is an automated message. Please do not reply to this email.
@@ -491,7 +471,7 @@ const sendCustomNotification = async (recipient, subject, message, reportDetails
           <!-- Footer -->
           <div style="background-color: #F3F4F6; padding: 20px; text-align: center;">
             <p style="color: #515964; font-size: 14px; margin: 0 0 8px 0;">
-              Thank you for using tenantli!
+              Thank you for using DepositShield!
             </p>
             <p style="color: #515964; font-size: 12px; margin: 0;">
               This is an automated message. Please do not reply to this email.

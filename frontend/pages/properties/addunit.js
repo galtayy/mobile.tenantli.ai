@@ -102,9 +102,9 @@ export default function AddUnit() {
   const [propertyName, setPropertyName] = useState('');
   const [address, setAddress] = useState('');
   
-  // Debug state changes
+  // Debug log to understand the issue
   useEffect(() => {
-    console.log('Address state changed to:', address);
+    console.log('Address value updated to:', address);
   }, [address]);
   const [unitNumber, setUnitNumber] = useState('');
   const googleSelectedAddressRef = useRef(null);
@@ -141,8 +141,9 @@ export default function AddUnit() {
   
   // Check if all required fields are filled
   const isFormValid = () => {
+    const finalAddress = addressInputRef.current?.value || address;
     return propertyName && 
-           (addressInputRef.current?.value || address) && 
+           finalAddress && 
            unitNumber && 
            depositAmount && 
            contractStartDate && 
@@ -212,8 +213,7 @@ export default function AddUnit() {
             addressInputRef.current &&
             !autocompleteRef.current) {
           
-          // Get current value before initializing
-          const currentValue = addressInputRef.current.value || address;
+          // Don't try to get or store current value
           
           const options = {
             types: ['address'],
@@ -229,8 +229,7 @@ export default function AddUnit() {
           
           setGoogleMapsLoaded(true);
           
-          // Restore value after initialization
-          addressInputRef.current.value = currentValue;
+          // Don't try to set input value here
           
           placeChangedListener = autocompleteRef.current.addListener('place_changed', () => {
             const place = autocompleteRef.current.getPlace();
@@ -274,7 +273,11 @@ export default function AddUnit() {
       if (timeoutId) clearTimeout(timeoutId);
       
       if (placeChangedListener) {
-        window.google.maps.event.removeListener(placeChangedListener);
+        try {
+          window.google.maps.event.removeListener(placeChangedListener);
+        } catch (error) {
+          console.error('Error clearing Google Maps listeners:', error);
+        }
       }
       
       if (autocompleteRef.current && window.google && window.google.maps && window.google.maps.event) {
@@ -353,54 +356,59 @@ export default function AddUnit() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Clear previous errors
-    setErrors({
-      propertyName: '',
-      address: '',
-      unitNumber: '',
-      depositAmount: '',
-      contractStartDate: '',
-      leaseDuration: ''
-    });
+    // If form is already valid and a lease document is uploaded, don't show validation messages
+    if (isFormValid() && leaseDocument) {
+      // Skip validation and proceed directly
+    } else {
+      // Clear previous errors
+      setErrors({
+        propertyName: '',
+        address: '',
+        unitNumber: '',
+        depositAmount: '',
+        contractStartDate: '',
+        leaseDuration: ''
+      });
 
-    // Validate required fields
-    let hasErrors = false;
-    const newErrors = {};
-    
-    if (!propertyName) {
-      newErrors.propertyName = 'Please enter a property name';
-      hasErrors = true;
-    }
-    
-    const finalAddress = addressInputRef.current ? addressInputRef.current.value : address;
-    if (!finalAddress) {
-      newErrors.address = 'Please enter an address';
-      hasErrors = true;
-    }
-    
-    if (!unitNumber) {
-      newErrors.unitNumber = 'Please enter a unit number';
-      hasErrors = true;
-    }
-    
-    if (!depositAmount) {
-      newErrors.depositAmount = 'Please enter deposit amount';
-      hasErrors = true;
-    }
-    
-    if (!contractStartDate) {
-      newErrors.contractStartDate = 'Please enter contract start date';
-      hasErrors = true;
-    }
-    
-    if (!leaseDuration) {
-      newErrors.leaseDuration = 'Please enter lease duration';
-      hasErrors = true;
-    }
-    
-    if (hasErrors) {
-      setErrors(newErrors);
-      return;
+      // Validate required fields
+      let hasErrors = false;
+      const newErrors = {};
+      
+      if (!propertyName) {
+        newErrors.propertyName = 'Please enter a property name';
+        hasErrors = true;
+      }
+      
+      const finalAddress = addressInputRef.current ? addressInputRef.current.value : address;
+      if (!finalAddress) {
+        newErrors.address = 'Please enter an address';
+        hasErrors = true;
+      }
+      
+      if (!unitNumber) {
+        newErrors.unitNumber = 'Please enter a unit number';
+        hasErrors = true;
+      }
+      
+      if (!depositAmount) {
+        newErrors.depositAmount = 'Please enter deposit amount';
+        hasErrors = true;
+      }
+      
+      if (!contractStartDate) {
+        newErrors.contractStartDate = 'Please enter contract start date';
+        hasErrors = true;
+      }
+      
+      if (!leaseDuration) {
+        newErrors.leaseDuration = 'Please enter lease duration';
+        hasErrors = true;
+      }
+      
+      if (hasErrors) {
+        setErrors(newErrors);
+        return;
+      }
     }
 
     setIsSubmitting(true);
@@ -441,8 +449,8 @@ export default function AddUnit() {
         console.error('Error saving temporary data:', tempError);
       }
 
-      // Get address from input or state
-      const finalAddress = addressInputRef.current ? addressInputRef.current.value : address;
+      // Just use the state value for consistency
+      const finalAddress = address;
       
       // Prepare property data for API
       const propertyData = {
@@ -526,7 +534,7 @@ export default function AddUnit() {
             }
           );
           
-          console.log('Lease document uploaded successfully');
+         // console.log('Lease document uploaded successfully');
           setUploadStatus('success');
           
           // Store the uploaded file info with the property
@@ -627,13 +635,14 @@ export default function AddUnit() {
   return (
     <div className="fixed inset-0 flex flex-col items-center bg-[#FBF5DA] overflow-hidden overflow-x-hidden">
       <Head>
-        <title>Add Home - Deposit Shield</title>
+        <title>Add Home - tenantli</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="theme-color" content="#FBF5DA" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="description" content="Add your rental property details and manage your home with Deposit Shield" />
+        <meta name="description" content="Add your rental property details and manage your home with tenantli" />
         <link rel="manifest" href="/manifest.json" />
+        {/* CSP meta tag can cause issues with Google Maps, removing it */}
         <style jsx global>{`
           @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
           
@@ -940,15 +949,24 @@ export default function AddUnit() {
               <input
                 ref={addressInputRef}
                 type="text"
-                defaultValue={address}
+                value={address}
+                onChange={(e) => {
+                  setAddress(e.target.value);
+                  setErrors(prev => ({ ...prev, address: '' }));
+                }}
                 onBlur={(e) => {
-                  const newValue = e.target.value;
-                  setAddress(newValue);
+                  // If we have a Google selected address in the ref, prioritize it
+                  if (googleSelectedAddressRef.current) {
+                    setAddress(googleSelectedAddressRef.current);
+                  } else {
+                    setAddress(e.target.value);
+                  }
                   setErrors(prev => ({ ...prev, address: '' }));
                 }}
                 placeholder="Where is this located?"
                 className="flex-1 h-[19px] font-bold text-[14px] leading-[19px] text-[#515964] bg-transparent border-none outline-none placeholder-[#A0A0A0]"
                 required
+                style={{height: "auto"}}
               />
             </div>
               <InputError message={errors.address} />

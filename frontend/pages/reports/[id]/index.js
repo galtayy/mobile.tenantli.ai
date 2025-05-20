@@ -340,27 +340,109 @@ export default function ReportDetail() {
     return `${domain}/reports/shared/${report.uuid}`;
   };
 
-  // Copy share link
-  const copyShareLink = () => {
+  // Enhanced copy share link function with robust cross-platform support
+  const copyShareLink = async () => {
     const link = getShareLink();
     if (!link) {
       console.error('Cannot create share link: Report UUID is missing.');
       return;
     }
     
-    // Yaşanılan sorunlar nedeniyle alternatif bir ID tabanlı link de oluştur
+    // Create an alternative ID-based link as fallback
     const domain = process.env.NODE_ENV === 'production' 
       ? 'https://mobile.tenantli.ai' 
       : window.location.origin;
     const fallbackLink = `${domain}/reports/shared/id-${report.id}`;
     const linkToShare = link || fallbackLink;
     
-    navigator.clipboard.writeText(linkToShare).then(() => {
-      console.log('Share link copied!');
-    }, (err) => {
-      console.error('Link copy error:', err);
-      console.error('Could not copy link.');
-    });
+    // Try using the modern Clipboard API first (most browsers)
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(linkToShare);
+        console.log('Share link copied using Clipboard API!');
+        alert('Link copied to clipboard!');
+        return;
+      } catch (err) {
+        console.warn('Clipboard API failed:', err);
+        // Fall through to alternative methods
+      }
+    }
+    
+    // iOS and touch-based devices - creates a temporary input that can be selected
+    // This works better on mobile devices where execCommand might fail
+    try {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isMobile = /Android|webOS|iPad|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      
+      if (isIOS || isMobile) {
+        console.log('Using mobile-optimized copy method');
+        const el = document.createElement('input');
+        el.value = linkToShare;
+        el.setAttribute('readonly', '');
+        el.style.position = 'absolute';
+        el.style.left = '-9999px';
+        document.body.appendChild(el);
+        
+        // Check if we need different selection handling for iOS
+        if (isIOS) {
+          // iOS requires a special selection technique
+          el.contentEditable = true;
+          el.readOnly = false;
+          
+          // Create a range and selection
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          el.setSelectionRange(0, 999999);
+        } else {
+          // Standard selection for other mobile devices
+          el.select();
+        }
+        
+        // Try to execute the copy command
+        const successful = document.execCommand('copy');
+        document.body.removeChild(el);
+        
+        if (successful) {
+          console.log('Mobile copy successful!');
+          alert('Link copied to clipboard!');
+          return;
+        }
+      }
+    } catch (mobileErr) {
+      console.warn('Mobile copy method failed:', mobileErr);
+      // Fall through to legacy method
+    }
+    
+    // Legacy fallback using execCommand for older browsers
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = linkToShare;
+      // Make the textarea out of viewport
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      const successful = document.execCommand('copy');
+      textArea.remove();
+      
+      if (successful) {
+        console.log('Legacy copy successful!');
+        alert('Link copied to clipboard!');
+      } else {
+        console.error('Legacy copy command failed');
+        // Last resort: show the link to the user to copy manually
+        alert(`Unable to automatically copy. Please copy this link manually: ${linkToShare}`);
+      }
+    } catch (err) {
+      console.error('All clipboard methods failed:', err);
+      alert(`Unable to copy automatically. Please copy this link manually: ${linkToShare}`);
+    }
   };
 
   // Generate and download PDF

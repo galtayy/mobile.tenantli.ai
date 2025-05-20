@@ -62,10 +62,18 @@ const DocumentViewerModal = ({ show, onClose, url, title, type = 'pdf' }) => {
       } else {
         absoluteUrl = window.location.origin + '/' + url;
       }
-      console.log('Setting PDF URL:', absoluteUrl);
+      console.log(`Setting document URL (${type})`, absoluteUrl);
       setPdfUrl(absoluteUrl);
+      
+      // Preload image if it's an image type
+      if (type === 'image' || getFileType(url) === 'image') {
+        const preloadImage = new Image();
+        preloadImage.src = absoluteUrl;
+        preloadImage.onload = handleLoad;
+        preloadImage.onerror = handleError;
+      }
     }
-  }, [show, url]);
+  }, [show, url, type]);
   
   if (!show) return null;
 
@@ -81,12 +89,20 @@ const DocumentViewerModal = ({ show, onClose, url, title, type = 'pdf' }) => {
   // Determine file type based on URL extension
   const getFileType = (fileUrl) => {
     if (!fileUrl) return 'unknown';
-    const extension = fileUrl.split('.').pop().toLowerCase();
+    // Use regex to extract extension from URL, handling query parameters
+    const extensionMatch = fileUrl.toLowerCase().match(/\.([a-z0-9]+)($|\?|#)/);
+    const extension = extensionMatch ? extensionMatch[1] : fileUrl.split('.').pop().toLowerCase();
+    
+    console.log('Detected file extension:', extension);
+    
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) {
+      console.log('Identified as image type');
       return 'image';
     } else if (extension === 'pdf') {
+      console.log('Identified as PDF type');
       return 'pdf';
     } else {
+      console.log('Unknown file type');
       return 'unknown';
     }
   };
@@ -180,13 +196,18 @@ const DocumentViewerModal = ({ show, onClose, url, title, type = 'pdf' }) => {
           
           {/* Image viewer */}
           {fileType === 'image' && (
-            <img 
-              src={url}
-              alt={title}
-              className="w-full h-full object-contain"
-              onLoad={handleLoad}
-              onError={handleError}
-            />
+            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+              <img 
+                src={pdfUrl || url}
+                alt={title}
+                className="max-w-full max-h-full object-contain"
+                onLoad={handleLoad}
+                onError={(e) => {
+                  console.error('Image failed to load:', e);
+                  handleError();
+                }}
+              />
+            </div>
           )}
           
           {/* PDF viewer */}
@@ -639,6 +660,8 @@ export default function LeaseDetails() {
         onClose={() => setShowPDFViewer(false)}
         url={leaseDocumentUrl}
         title={leaseDocumentName}
+        type={leaseDocumentUrl?.toLowerCase().endsWith('.pdf') ? 'pdf' : 
+              (leaseDocumentUrl?.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/) ? 'image' : 'unknown')}
       />
     </>
   );

@@ -54,15 +54,86 @@ export default function SharedReportsIndex() {
     return `${window.location.origin}/reports/shared/${report.uuid}`;
   };
 
-  // Paylaşım linkini kopyala
-  const copyShareLink = (report) => {
+  // Paylaşım linkini kopyala (with enhanced fallbacks)
+  const copyShareLink = async (report) => {
     const link = getShareLink(report);
-    navigator.clipboard.writeText(link).then(() => {
-      // Kullanıcıya başarılı bir şekilde kopyalandığını bildir
-      alert('Share link copied to clipboard!');
-    }).catch(err => {
-      console.error('Failed to copy link: ', err);
-    });
+    
+    try {
+      let copySuccess = false;
+      console.log('Attempting to copy URL:', link);
+      
+      // Method 1: Modern clipboard API (most reliable but requires secure context)
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          console.log('Trying navigator.clipboard.writeText method');
+          await navigator.clipboard.writeText(link);
+          copySuccess = true;
+          console.log('Clipboard API success');
+        } catch (clipboardErr) {
+          console.error('Clipboard API failed:', clipboardErr);
+          // Continue to fallback methods
+        }
+      }
+      
+      // Method 2: execCommand with optimized textarea (older browser fallback)
+      if (!copySuccess) {
+        try {
+          console.log('Trying execCommand method');
+          const textArea = document.createElement('textarea');
+          textArea.value = link;
+          
+          // Apply styling to hide the textarea but keep it functional
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          textArea.style.opacity = '0';
+          textArea.style.zIndex = '-9999';
+          
+          // iOS optimization
+          textArea.contentEditable = true;
+          textArea.readOnly = false;
+          
+          // Append, select, copy, remove
+          document.body.appendChild(textArea);
+          
+          // iOS specific handling
+          if (navigator.userAgent.match(/ipad|iphone/i)) {
+            // Create range and selection
+            const range = document.createRange();
+            range.selectNodeContents(textArea);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            textArea.setSelectionRange(0, 999999);
+          } else {
+            textArea.select();
+          }
+          
+          const successful = document.execCommand('copy');
+          document.body.removeChild(textArea);
+          
+          if (successful) {
+            copySuccess = true;
+            console.log('execCommand success');
+          } else {
+            console.error('execCommand failed');
+          }
+        } catch (execErr) {
+          console.error('execCommand method failed:', execErr);
+        }
+      }
+      
+      // Provide user feedback
+      if (copySuccess) {
+        alert('Share link copied to clipboard!');
+      } else {
+        console.error('All clipboard methods failed');
+        alert('Unable to copy automatically. The link is: ' + link);
+      }
+    } catch (error) {
+      console.error('Copy operation failed:', error);
+      alert('Unable to copy. The link is: ' + link);
+    }
   };
 
   if (authLoading) {
