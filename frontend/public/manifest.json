@@ -1,0 +1,53 @@
+{
+  "name": "tenantli",
+  "short_name": "tenantli",
+  "description": "Property inspection and documentation app",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FBF5DA",
+  "theme_color": "#1C2C40",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en-US",
+  "categories": ["utilities", "productivity", "lifestyle"],
+  "screenshots": [
+    {
+      "src": "/images/dashboard.png",
+      "type": "image/png",
+      "sizes": "540x720"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Home",
+      "short_name": "Add",
+      "description": "Add a new property",
+      "url": "/properties/addunit",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
