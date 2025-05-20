@@ -340,7 +340,7 @@ export default function ConfigureRoom() {
           <div className="flex flex-row items-center px-[20px] pt-[60px] pb-[20px] relative">
             {!returnUrl?.includes('/summary') && (
               <Link 
-                href={id ? `/properties/${id}` : '/properties'}
+                href={id ? `/properties/${id}/index-new` : '/properties'}
                 className="flex items-center relative z-10 hover:opacity-75 transition-opacity duration-200"
                 aria-label="Go back"
               >
