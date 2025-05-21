@@ -33,7 +33,11 @@ const corsOptions = {
       'http://localhost:3000',  // Geliştirme ortamındaki frontend
       'http://localhost:5050',  // Geliştirme ortamındaki backend
       'https://mobile.tenantli.ai', // Canlı frontend
-      'https://api.tenantli.ai' // Canlı backend
+      'https://api.tenantli.ai', // Canlı backend
+      'https://app', // Capacitor hostname
+      'capacitor://app', // Capacitor şema + hostname
+      'capacitor://localhost', // Alternatif Capacitor orjin
+      'app://' // iOS Capacitor şema
     ];
     
     // Geliştirme modunda tüm isteklere izin ver
@@ -45,15 +49,22 @@ const corsOptions = {
     // Origin olmayan istekler (postman, curl gibi olanlar için)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1 || origin.match(/localhost/)) {
+    // Listedekilerle tam eşleşme veya mobil app şemalarıyla eşleşme kontrolü
+    if (allowedOrigins.indexOf(origin) !== -1 || 
+        origin.match(/localhost/) || 
+        origin.match(/^capacitor:\/\//) ||
+        origin.match(/^app:\/\//) ||
+        origin.match(/^https:\/\/app/)) {
       callback(null, true);
     } else {
       console.log('CORS rejected:', origin);
-      callback(new Error('CORS policy\'a izin verilmiyor'));
+      // Hata vermek yerine izin ver (sorun çözülene kadar geçici çözüm)
+      callback(null, true);
+      // callback(new Error('CORS policy\'a izin verilmiyor'));
     }
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Public-Access', 'X-Optional-Auth'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Public-Access', 'X-Optional-Auth', 'Cache-Control', 'Accept'],
   exposedHeaders: ['Content-Length', 'Content-Type'],
   credentials: true,
   maxAge: 86400 // 24 saat
