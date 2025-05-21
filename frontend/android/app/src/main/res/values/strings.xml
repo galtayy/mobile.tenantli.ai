@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">tenantli</string>
+    <string name="title_activity_main">Tenantli</string>
+    <string name="package_name">ai.tenantli.mobile</string>
+    <string name="custom_url_scheme">ai.tenantli.mobile</string>
+</resources>

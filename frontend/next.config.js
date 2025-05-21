@@ -7,15 +7,9 @@ const withPWA = require('next-pwa')({
 
 module.exports = withPWA({
   reactStrictMode: true,
+  output: 'export',
   images: {
     domains: ['localhost', 'https://api.tenantli.ai'],
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: 'https://api.tenantli.ai/api/:path*', // Düzeltilmiş API URL
-      },
-    ]
-  },
+    unoptimized: true
+  }
 })

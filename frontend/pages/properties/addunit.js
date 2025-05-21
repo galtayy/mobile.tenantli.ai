@@ -213,7 +213,96 @@ export default function AddUnit() {
             addressInputRef.current &&
             !autocompleteRef.current) {
           
-          // Don't try to get or store current value
+          console.log('Initializing Google Maps Autocomplete');
+          
+          // Set the initial style for the input field
+          if (addressInputRef.current) {
+            addressInputRef.current.style.textAlign = 'left';
+            addressInputRef.current.style.paddingLeft = '0';
+          }
+          
+          // Force complete re-render of Google's CSS to ensure styles work
+          const pacStyle = document.createElement('style');
+          pacStyle.textContent = `
+            .pac-container {
+              z-index: 9999 !important;
+              border-radius: 14px !important;
+              border: 1px solid #D1E7D5 !important;
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+              margin-top: 4px !important;
+              font-family: 'Nunito', sans-serif !important;
+              background-color: white !important;
+              position: fixed !important;
+              left: 50% !important;
+              transform: translateX(-50%) !important;
+              width: 85% !important;
+              max-width: 460px !important;
+              max-height: 250px !important;
+              overflow-y: auto !important;
+            }
+            .pac-logo:after { display: none !important; }
+            .pac-item {
+              padding: 10px 14px !important;
+              cursor: pointer !important;
+              display: flex !important;
+              align-items: center !important;
+              border-bottom: 1px solid #f0f0f0 !important;
+              font-family: 'Nunito', sans-serif !important;
+              height: auto !important;
+              min-height: 42px !important;
+            }
+            .pac-item:last-child { border-bottom: none !important; }
+            .pac-item:hover { background-color: #F6FEF7 !important; }
+            .pac-item-selected, .pac-item-selected:hover { background-color: #F1FCF4 !important; }
+            .pac-item-query {
+              font-size: 13px !important;
+              font-weight: 600 !important;
+              color: #515964 !important;
+              padding-right: 4px !important;
+              font-family: 'Nunito', sans-serif !important;
+            }
+            .pac-matched { font-weight: 700 !important; color: #0B1420 !important; font-size: 13px !important; }
+            .pac-item span { font-size: 13px !important; color: #515964 !important; }
+            .pac-icon {
+              display: block !important;
+              background-image: url(https://maps.gstatic.com/mapfiles/api-3/images/autocomplete-icons.png) !important;
+              background-size: contain !important;
+              width: 16px !important;
+              height: 16px !important;
+              margin-right: 8px !important;
+            }
+            /* Fix the input field from jumping around */
+            input.gm-style-input,
+            .pac-target-input {
+              text-align: left !important;
+              padding-left: 0 !important;
+              text-indent: 0 !important;
+            }
+            
+            /* Additional fixes for the input when typing */
+            div.pac-container ~ input,
+            input.pac-target-input {
+              text-align: left !important;
+              padding-left: 0 !important;
+              text-indent: 0 !important;
+            }
+            .pac-container .pac-icon {
+              margin-top: 0 !important;
+            }
+            .pac-container .pac-item-query,
+            .pac-container .pac-matched {
+              position: relative !important;
+              left: 0 !important;
+              padding-left: 0 !important;
+            }
+            @media (max-width: 480px) {
+              .pac-container { width: 85% !important; max-height: 220px !important; margin-top: 6px !important; }
+              .pac-item { padding: 10px 12px !important; min-height: 38px !important; }
+              .pac-item-query, .pac-item span, .pac-matched { font-size: 12px !important; }
+              /* Remove duplicate entry */
+            }
+          `;
+          document.head.appendChild(pacStyle);
           
           const options = {
             types: ['address'],
@@ -227,9 +316,138 @@ export default function AddUnit() {
             options
           );
           
-          setGoogleMapsLoaded(true);
+          // Prevent Google from modifying the input styles
+          // MutationObserver to watch for Google's style changes and revert them
+          const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+              if (mutation.type === 'attributes' && addressInputRef.current) {
+                if (mutation.attributeName === 'style' || mutation.attributeName === 'class') {
+                  // Make sure the style remains as we want
+                  addressInputRef.current.style.textAlign = 'left';
+                  addressInputRef.current.style.paddingLeft = '0';
+                  addressInputRef.current.style.textIndent = '0';
+                }
+              }
+            });
+          });
           
-          // Don't try to set input value here
+          // Store observer for cleanup
+          if (!window.googleMapObservers) window.googleMapObservers = [];
+          window.googleMapObservers.push(observer);
+          
+          // Start observing the input element for style and class changes
+          if (addressInputRef.current) {
+            observer.observe(addressInputRef.current, { 
+              attributes: true, 
+              attributeFilter: ['style', 'class'] 
+            });
+            
+            // Ensure initial styles are applied
+            addressInputRef.current.style.textAlign = 'left';
+            addressInputRef.current.style.paddingLeft = '0';
+            addressInputRef.current.style.textIndent = '0';
+          }
+          
+          // Prevent form submission on enter key in autocomplete
+          google.maps.event.addDomListener(addressInputRef.current, 'keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+            }
+          });
+          
+          // Apply custom CSS to make sure the dropdown appears properly
+          const applyCustomStyles = () => {
+            const pacContainers = document.querySelectorAll('.pac-container');
+            pacContainers.forEach(container => {
+              // Ensure styles are applied with !important
+              container.style.setProperty('z-index', '9999', 'important');
+              container.style.setProperty('position', 'fixed', 'important');
+              container.style.setProperty('left', '50%', 'important');
+              container.style.setProperty('transform', 'translateX(-50%)', 'important');
+              container.style.setProperty('width', '85%', 'important');
+              container.style.setProperty('max-width', '460px', 'important');
+              container.style.setProperty('border-radius', '14px', 'important');
+              container.style.setProperty('border', '1px solid #D1E7D5', 'important');
+              container.style.setProperty('background-color', 'white', 'important');
+              container.style.setProperty('font-family', '"Nunito", sans-serif', 'important');
+              container.style.setProperty('box-shadow', '0 4px 12px rgba(0, 0, 0, 0.08)', 'important');
+              container.style.setProperty('max-height', '250px', 'important');
+              
+              // Style all items inside container
+              const items = container.querySelectorAll('.pac-item');
+              items.forEach(item => {
+                item.style.setProperty('padding', '10px 14px', 'important');
+                item.style.setProperty('min-height', '42px', 'important');
+                item.style.setProperty('border-bottom', '1px solid #f0f0f0', 'important');
+              });
+              
+              // Style all text elements consistently
+              const allTextElements = container.querySelectorAll('.pac-item-query, .pac-item span, .pac-matched');
+              allTextElements.forEach(el => {
+                el.style.setProperty('font-size', '13px', 'important');
+                el.style.setProperty('color', '#515964', 'important');
+                el.style.setProperty('font-family', '"Nunito", sans-serif', 'important');
+              });
+              
+              // Set matched text differently
+              const matchedTexts = container.querySelectorAll('.pac-matched');
+              matchedTexts.forEach(el => {
+                el.style.setProperty('font-weight', '700', 'important');
+                el.style.setProperty('color', '#0B1420', 'important');
+              });
+              
+              // Style the icons
+              const icons = container.querySelectorAll('.pac-icon');
+              icons.forEach(icon => {
+                icon.style.setProperty('width', '16px', 'important');
+                icon.style.setProperty('height', '16px', 'important');
+                icon.style.setProperty('margin-right', '8px', 'important');
+              });
+            });
+          };
+          
+          // Apply styles when dropdown opens and during typing
+          addressInputRef.current.addEventListener('focus', () => {
+            // Apply styles after a short delay to ensure Google's dropdown is rendered
+            setTimeout(applyCustomStyles, 100);
+          });
+          
+          addressInputRef.current.addEventListener('input', () => {
+            // Maintain consistent style during typing
+            if (addressInputRef.current) {
+              addressInputRef.current.style.textAlign = 'left';
+              addressInputRef.current.style.paddingLeft = '0';
+              addressInputRef.current.style.textIndent = '0';
+            }
+            // Apply dropdown styles with each keystroke - use requestAnimationFrame for smoother updates
+            requestAnimationFrame(applyCustomStyles);
+            // And also double-check after a brief delay
+            setTimeout(applyCustomStyles, 10);
+          });
+          
+          // Also handle keydown/keyup events for additional stability
+          ['keydown', 'keyup', 'keypress'].forEach(eventType => {
+            addressInputRef.current.addEventListener(eventType, () => {
+              if (addressInputRef.current) {
+                addressInputRef.current.style.textAlign = 'left';
+                addressInputRef.current.style.paddingLeft = '0';
+                addressInputRef.current.style.textIndent = '0';
+              }
+            });
+          });
+          
+          // Additional listener for Google's dropdown changes
+          const dropdownObserver = new MutationObserver((mutations) => {
+            for (let mutation of mutations) {
+              if (mutation.addedNodes.length) {
+                // Apply styles when new DOM nodes are added (like when dropdown appears)
+                applyCustomStyles();
+              }
+            }
+          });
+          dropdownObserver.observe(document.body, { childList: true, subtree: true });
+          
+          setGoogleMapsLoaded(true);
           
           placeChangedListener = autocompleteRef.current.addListener('place_changed', () => {
             const place = autocompleteRef.current.getPlace();
@@ -241,6 +459,12 @@ export default function AddUnit() {
               // Update state and ref value
               setAddress(newAddress);
               googleSelectedAddressRef.current = newAddress;
+              
+              // Focus the next field (unitNumber) after selecting an address
+              setTimeout(() => {
+                const unitNumberInput = document.querySelector('input[placeholder="Unit number"]');
+                if (unitNumberInput) unitNumberInput.focus();
+              }, 100);
             }
           });
           
@@ -286,6 +510,25 @@ export default function AddUnit() {
         } catch (error) {
           console.error('Error clearing Google Maps listeners:', error);
         }
+      }
+      
+      // Remove any dynamically added style elements
+      const pacStyles = document.querySelectorAll('style');
+      pacStyles.forEach(style => {
+        if (style.textContent.includes('.pac-container')) {
+          style.remove();
+        }
+      });
+      
+      // Remove any MutationObservers we created
+      try {
+        // Any observers that were created will be stopped
+        if (window.googleMapObservers) {
+          window.googleMapObservers.forEach(observer => observer.disconnect());
+          window.googleMapObservers = [];
+        }
+      } catch (error) {
+        console.error('Error cleaning up observers:', error);
       }
     };
   }, [address]);
@@ -703,35 +946,76 @@ export default function AddUnit() {
             }
           }
           
-          /* Google Autocomplete custom styles */
+          /* Reset all Google Autocomplete styles */
           .pac-container {
-            background-color: #FFFFFF !important;
-            border: 1px solid #D1E7D5 !important;
-            border-radius: 16px !important;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
-            font-family: 'Nunito', sans-serif !important;
-            margin-top: 4px !important;
             z-index: 9999 !important;
-            overflow: hidden !important;
+            border-radius: 14px !important;
+            border: 1px solid #D1E7D5 !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+            margin-top: 4px !important;
+            font-family: 'Nunito', sans-serif !important;
+            background-color: white !important;
+            transform: none !important;
+            max-height: 250px !important;
+            overflow-y: auto !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: 85% !important;
+            max-width: 460px !important;
           }
           
-          .pac-container:after {
+          .pac-logo:after {
             display: none !important;
           }
           
+          .pac-icon {
+            display: block !important;
+            background-image: url(https://maps.gstatic.com/mapfiles/api-3/images/autocomplete-icons.png) !important;
+            background-size: contain !important;
+            background-position: center !important;
+            width: 16px !important;
+            height: 16px !important;
+            margin-right: 8px !important;
+          }
+          
           .pac-item {
-            border: none !important;
-            padding: 14px 16px !important;
-            font-size: 14px !important;
-            line-height: 19px !important;
-            color: #515964 !important;
+            padding: 10px 14px !important;
             cursor: pointer !important;
-            transition: background-color 0.2s ease !important;
-            font-weight: 600 !important;
+            display: flex !important;
+            align-items: center !important;
+            border-bottom: 1px solid #f0f0f0 !important;
+            font-family: 'Nunito', sans-serif !important;
+            height: auto !important;
+            min-height: 42px !important;
           }
           
           .pac-item:hover {
             background-color: #F6FEF7 !important;
+          }
+          
+          .pac-item:last-child {
+            border-bottom: none !important;
+          }
+          
+          .pac-item-query {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #515964 !important;
+            padding-right: 4px !important;
+            font-family: 'Nunito', sans-serif !important;
+          }
+          
+          /* Ensure all spans in pac-items are consistent */
+          .pac-item span {
+            font-size: 13px !important;
+            font-family: 'Nunito', sans-serif !important;
+            color: #515964 !important;
+          }
+          
+          .pac-matched {
+            font-weight: 700 !important;
+            color: #0B1420 !important;
+            font-size: 13px !important;
           }
           
           .pac-item-selected,
@@ -739,37 +1023,33 @@ export default function AddUnit() {
             background-color: #F1FCF4 !important;
           }
           
-          .pac-item:not(:last-child) {
-            border-bottom: 1px solid #F3F4F6 !important;
+          /* Additional styles for ensuring visibility */
+          .pac-container.pac-logo {
+            position: fixed !important;
+            top: auto !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            width: 85% !important;
+            max-width: 460px !important;
           }
           
-          .pac-matched {
-            font-weight: 700 !important;
-            color: #0B1420 !important;
-          }
-          
-          .pac-item-query {
-            font-weight: 700 !important;
-            color: #0B1420 !important;
-            font-size: 14px !important;
-          }
-          
-          .pac-icon {
-            width: 20px !important;
-            height: 20px !important;
-            margin-right: 8px !important;
-            background-size: 20px 20px !important;
-            background-position: center !important;
-            flex-shrink: 0 !important;
-          }
-          
-          .pac-icon-marker {
-            background-position: center !important;
-          }
-          
-          /* Hide Google logo */
-          .pac-logo:after {
-            display: none !important;
+          /* Mobile optimizations */
+          @media (max-width: 480px) {
+            .pac-container {
+              width: 85% !important;
+              max-height: 220px !important;
+              -webkit-overflow-scrolling: touch !important;
+              margin-top: 6px !important;
+            }
+            
+            .pac-item {
+              padding: 10px 12px !important;
+              min-height: 38px !important;
+            }
+            
+            .pac-item-query, .pac-item span, .pac-matched {
+              font-size: 12px !important;
+            }
           }
           
           /* Hide scrollbar for all browsers */
@@ -953,6 +1233,71 @@ export default function AddUnit() {
                 onChange={(e) => {
                   setAddress(e.target.value);
                   setErrors(prev => ({ ...prev, address: '' }));
+                  
+                  // Apply styles immediately on each keystroke
+                  requestAnimationFrame(() => {
+                    if (addressInputRef.current) {
+                      // Force text alignment and styles
+                      addressInputRef.current.style.textAlign = 'left';
+                      addressInputRef.current.style.paddingLeft = '0';
+                      
+                      // Style the autocomplete dropdown each time text changes
+                      const pacContainers = document.querySelectorAll('.pac-container');
+                      pacContainers.forEach(container => {
+                        container.style.setProperty('z-index', '9999', 'important');
+                        container.style.setProperty('position', 'fixed', 'important');
+                        container.style.setProperty('left', '50%', 'important');
+                        container.style.setProperty('transform', 'translateX(-50%)', 'important');
+                        container.style.setProperty('width', '85%', 'important');
+                        container.style.setProperty('max-width', '460px', 'important');
+                      });
+                    }
+                  });
+                  
+                  // Double check after a brief delay
+                  setTimeout(() => {
+                    if (addressInputRef.current) {
+                      addressInputRef.current.style.textAlign = 'left';
+                    }
+                  }, 10);
+                }}
+                onFocus={() => {
+                  // Ensure the input's style remains consistent when focused
+                  if (addressInputRef.current) {
+                    addressInputRef.current.style.textAlign = 'left';
+                    addressInputRef.current.style.paddingLeft = '0';
+                  }
+                  
+                  // Apply styles on focus
+                  setTimeout(() => {
+                    const pacContainers = document.querySelectorAll('.pac-container');
+                    pacContainers.forEach(container => {
+                      Object.assign(container.style, {
+                        zIndex: '9999 !important',
+                        position: 'fixed !important',
+                        left: '50% !important',
+                        transform: 'translateX(-50%) !important',
+                        width: '85% !important',
+                        maxWidth: '460px !important',
+                        borderRadius: '14px !important',
+                        maxHeight: '250px !important',
+                        backgroundColor: 'white !important'
+                      });
+                      
+                      // Style the dropdown items too
+                      const items = container.querySelectorAll('.pac-item');
+                      items.forEach(item => {
+                        item.style.padding = '10px 14px';
+                        item.style.minHeight = '42px';
+                      });
+                      
+                      const queries = container.querySelectorAll('.pac-item-query');
+                      queries.forEach(query => {
+                        query.style.fontSize = '14px';
+                        query.style.color = '#515964';
+                      });
+                    });
+                  }, 100);
                 }}
                 onBlur={(e) => {
                   // If we have a Google selected address in the ref, prioritize it
@@ -963,10 +1308,19 @@ export default function AddUnit() {
                   }
                   setErrors(prev => ({ ...prev, address: '' }));
                 }}
+                onInput={() => {
+                  // Ensure the input's style remains consistent during typing
+                  if (addressInputRef.current) {
+                    addressInputRef.current.style.textAlign = 'left';
+                    addressInputRef.current.style.paddingLeft = '0';
+                  }
+                }}
                 placeholder="Where is this located?"
-                className="flex-1 h-[19px] font-bold text-[14px] leading-[19px] text-[#515964] bg-transparent border-none outline-none placeholder-[#A0A0A0]"
+                className="flex-1 h-auto min-h-[19px] font-bold text-[14px] leading-[19px] text-[#515964] bg-transparent border-none outline-none placeholder-[#A0A0A0] text-left"
+                style={{textAlign: 'left', paddingLeft: 0}}
                 required
-                style={{height: "auto"}}
+                autoComplete="off"
+                spellCheck="false"
               />
             </div>
               <InputError message={errors.address} />
