@@ -7,7 +7,9 @@ const withPWA = require('next-pwa')({
 
 module.exports = withPWA({
   reactStrictMode: true,
-  output: 'export',
+  // output ayarını koşula bağlı olarak belirleyelim
+  // eğer EXPORT_MODE değişkeni varsa output: 'export' olacak
+  ...(process.env.EXPORT_MODE ? { output: 'export' } : {}),
   images: {
     domains: ['localhost', 'https://api.tenantli.ai'],
     unoptimized: true
