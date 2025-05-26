@@ -5,6 +5,8 @@ import { toast } from 'react-toastify';
 import Head from 'next/head';
 import { useAuth } from '../../../lib/auth';
 import { apiService } from '../../../lib/api';
+import { getRoomPhotoUrl } from '../../../lib/helpers/photoHelper';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const ArrowLeftIcon = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -67,6 +69,194 @@ const OtherIcon = () => (
     <path d="M19 2V8" stroke="#0B1420" strokeWidth="1.5"/>
   </svg>
 );
+
+// Arrow right icon
+const ArrowRightIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M5.94001 13.2799L10.6 8.61989C11.14 8.07989 11.14 7.17989 10.6 6.63989L5.94001 1.97989" 
+      stroke="#1C2C40" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
+// Room Card Component
+const RoomCard = ({ room, index, router, id, deleteRoom, roomPhotos, apiService, getRoomPhotoUrl }) => {
+  const [isSwipedLeft, setIsSwipedLeft] = useState(false);
+  const isRoomCompleted = room.isCompleted;
+  
+  return (
+    <motion.div
+      key={room.id || index}
+      className="relative overflow-hidden mb-[16px]"
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      {/* Background - shows full width of card */}
+      <div className="absolute inset-0 bg-red-500 rounded-[16px]" />
+      
+      {/* Delete button area - 15% width on right side - Only visible when swiped */}
+      <div
+        className={`absolute inset-y-0 right-0 w-[15%] bg-red-500 rounded-r-[16px] flex items-center justify-center z-20 ${isSwipedLeft ? 'visible' : 'invisible'}`}
+      >
+        <button
+          className="w-full h-full flex items-center justify-center cursor-pointer"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('[DEBUG] Delete button clicked for room:', room.id);
+            deleteRoom(e, room.id);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+          aria-label="Odayı sil"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.5 4.98C15.5583 4.70833 13.6 4.56667 11.65 4.56667C10 4.56667 8.35 4.65 6.7 4.81667L5 4.98" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M7.08333 4.14167L7.26667 3.05C7.4 2.25833 7.5 1.66667 8.90833 1.66667H11.0917C12.5 1.66667 12.6083 2.29167 12.7333 3.05833L12.9167 4.14167" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M15.7083 7.61667L15.1667 16.0083C15.075 17.3167 15 18.3333 12.675 18.3333H7.32499C5 18.3333 4.92499 17.3167 4.83333 16.0083L4.29167 7.61667" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M8.60833 13.75H11.3833" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M7.91667 10.4167H12.0833" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </button>
+      </div>
+      
+      {/* Swipeable room card */}
+      <motion.div
+        className="room-card relative"
+        style={{ zIndex: isSwipedLeft ? 5 : 10 }}
+        drag="x"
+        dragConstraints={{ left: -60, right: 0 }}
+        dragElastic={{ left: 0.2, right: 0 }}
+        dragSnapToOrigin={false}
+        dragDirection="horizontal"
+        onDragEnd={(event, info) => {
+          // Sola yeterince sürüklendi mi kontrol et
+          if (info.offset.x < -30) {
+            setIsSwipedLeft(true);
+          } else {
+            setIsSwipedLeft(false);
+          }
+        }}
+        animate={{ x: isSwipedLeft ? -60 : 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        whileDrag={{ cursor: "grabbing" }}
+      >
+        <div
+          className="p-[16px] bg-white border border-[#D1E7D5] rounded-[16px] cursor-pointer hover:border-[#1C2C40] transition-colors duration-200"
+          onClick={() => {
+            if (!isSwipedLeft) {
+              router.push({
+                pathname: `/properties/${id}/configure-room`,
+                query: {
+                  roomName: room.name,
+                  roomType: room.type,
+                  roomId: room.id
+                }
+              });
+            }
+          }}
+        >
+          <div className="flex flex-row justify-between items-start w-full">
+            <div className="flex flex-row items-start">
+              <div className="flex flex-col items-start gap-[8px] flex-1 pr-2">
+                <div className="flex flex-row items-center gap-[4px] w-full flex-wrap">
+                  {isRoomCompleted && (
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-1">
+                      <circle cx="8" cy="8" r="8" fill="#1C2C40"/>
+                      <path d="M6.66667 8.66667L7.33333 9.33333L9.33333 7.33333" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                  <span className="font-bold text-[14px] leading-[19px] text-[#0B1420]">
+                    {room.name}
+                  </span>
+                  {room.roomQuality === 'attention' && room.itemsNoted > 0 && (
+                    <span className="font-semibold text-[14px] leading-[19px] text-[#0B1420]">
+                      ({room.itemsNoted} {room.itemsNoted === 1 ? 'item' : 'items'} noted)
+                    </span>
+                  )}
+                  {room.roomQuality === 'good' && (
+                    <span className="font-semibold text-[14px] leading-[19px] text-[#55A363]">
+                      (Looks good)
+                    </span>
+                  )}
+                  {(!room.roomQuality || room.roomQuality === 'null' || room.roomQuality === 'undefined') && (
+                    <span className="font-semibold text-[14px] leading-[19px] text-[#515964]">
+                      (No assessment)
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-row items-center gap-[4px] h-[24px]">
+                  <div className="flex flex-row">
+                {console.log('Room photos for', room.id, ':', roomPhotos[room.id]?.photos?.length || 0, 'photos')}
+                {Array.from({ length: Math.min(room.photoCount || 0, 4) }).map((_, i) => {
+                  // Console log for debugging
+                  console.log('Rendering photo', i, 'for room', room.id);
+
+                  // Get photo URL from room photos if available
+                  let photoUrl = null;
+
+                  try {
+                    // Use the imported helper function
+                    photoUrl = getRoomPhotoUrl(roomPhotos, room, i);
+                    
+                    // Fallback if helper doesn't work
+                    if (!photoUrl) {
+                      if (roomPhotos[room.id]?.photos?.[i]?.url) {
+                        photoUrl = roomPhotos[room.id].photos[i].url;
+                      } else if (roomPhotos[room.id]?.photos?.[i]?.file_path) {
+                        photoUrl = `${apiService.getBaseUrl()}/uploads/${roomPhotos[room.id].photos[i].file_path}`;
+                      }
+                    }
+                  } catch (error) {
+                    console.error(`Error rendering photo ${i} for room ${room.id}:`, error);
+                  }
+
+                  console.log('Photo URL for', room.id, ':', photoUrl);
+
+                  return (
+                    <div
+                      key={i}
+                      className="w-[24px] h-[24px] rounded-full bg-gray-200 border border-[#D1E7E2] overflow-hidden"
+                      style={{
+                        marginLeft: i > 0 ? '-8px' : '0',
+                        backgroundImage: photoUrl ? `url(${photoUrl})` : 'none',
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        zIndex: 10 - i // Higher z-index for first items
+                      }}
+                    >
+                      {!photoUrl && (
+                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 8C7.10457 8 8 7.10457 8 6C8 4.89543 7.10457 4 6 4C4.89543 4 4 4.89543 4 6C4 7.10457 4.89543 8 6 8Z" fill="#A3ADB8"/>
+                            <path d="M9.33333 2H6.66667C3.33333 2 2 3.33333 2 6.66667V9.33333C2 12.6667 3.33333 14 6.66667 14H9.33333C12.6667 14 14 12.6667 14 9.33333V6.66667C14 3.33333 12.6667 2 9.33333 2ZM12.3067 9.63333L10.2867 7.22C10.08 6.96667 9.82667 6.96667 9.62 7.22L7.88667 9.3C7.68667 9.55 7.43333 9.55 7.23333 9.3L6.65333 8.58C6.45333 8.33667 6.20667 8.34333 6.01333 8.59333L3.81333 11.4767C3.57333 11.7933 3.69333 12.06 4.10667 12.06H11.8867C12.3 12.06 12.4267 11.7933 12.3067 9.63333Z" fill="#A3ADB8"/>
+                          </svg>
+                        </div>
+                      )}
+                      {i === 3 && room.photoCount > 4 && (
+                        <div className="flex items-center justify-center w-full h-full bg-[#1C2C40] text-white font-bold text-[10px]">
+                          +{room.photoCount - 3}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                  </div>
+                  <span className="font-semibold text-[12px] leading-[16px] text-[#515964] ml-[6px]">
+                    ({parseInt(room.photoCount) || 0} {parseInt(room.photoCount) === 1 ? 'Photo' : 'Photos'})
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center h-full">
+              <ArrowRightIcon />
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 // Room type selection component
 const RoomTypeSelector = ({ show, onSelect, onClose }) => {
@@ -215,6 +405,8 @@ export default function AddRooms() {
   const [showRoomTypeSelector, setShowRoomTypeSelector] = useState(false);
   const [currentEditingRoom, setCurrentEditingRoom] = useState(null);
   const [rooms, setRooms] = useState([]);
+  const [roomPhotos, setRoomPhotos] = useState({});
+  const [isPropertySetupComplete, setIsPropertySetupComplete] = useState(false);
   const formRef = useRef(null);
   
   useEffect(() => {
@@ -238,35 +430,43 @@ export default function AddRooms() {
         try {
           setIsLoading(true);
 
-          // First try to load from localStorage for immediate feedback
-          const savedRooms = JSON.parse(localStorage.getItem(`property_${id}_rooms`) || '[]');
-          console.log('[FETCH DEBUG] Loading rooms from localStorage:', savedRooms);
+          // Always try to load from database API first to get the latest data
+          try {
+            console.log('[FETCH DEBUG] Loading rooms from database API...');
+            const roomsResponse = await apiService.properties.getRooms(id);
+            console.log('[FETCH DEBUG] API response for rooms:', roomsResponse.data);
 
-          if (savedRooms.length > 0) {
-            console.log('[FETCH DEBUG] Found rooms in localStorage, formatting...');
-            // Convert the saved room data to the format expected by the component
-            const formattedRooms = savedRooms.map(room => ({
-              id: room.roomId,
-              name: room.roomName,
-              type: room.roomType,
-              photoCount: room.photoCount || 0,
-              roomQuality: room.roomQuality || null,
-              roomIssueNotes: room.roomIssueNotes || [],
-              timestamp: room.timestamp
-            }));
-            console.log('[FETCH DEBUG] Setting rooms state with formatted rooms:', formattedRooms);
-            setRooms(formattedRooms);
-          } else {
-            console.log('[FETCH DEBUG] No rooms found in localStorage, trying database');
+            if (roomsResponse.data && roomsResponse.data.length > 0) {
+              // Format and use the rooms from the database
+              const apiRooms = roomsResponse.data.map(room => ({
+                id: room.roomId,
+                name: room.roomName,
+                type: room.roomType,
+                photoCount: room.photoCount || 0,
+                roomQuality: room.roomQuality || null,
+                roomIssueNotes: room.roomIssueNotes || [],
+                timestamp: room.timestamp
+              }));
 
-            // Try to load from database API
-            try {
-              const roomsResponse = await apiService.properties.getRooms(id);
-              console.log('[FETCH DEBUG] API response for rooms:', roomsResponse.data);
+              // Store in localStorage for later use
+              localStorage.setItem(`property_${id}_rooms`, JSON.stringify(roomsResponse.data));
 
-              if (roomsResponse.data && roomsResponse.data.length > 0) {
-                // Format and use the rooms from the database
-                const apiRooms = roomsResponse.data.map(room => ({
+              // Set state
+              console.log('[FETCH DEBUG] Setting rooms state with API rooms:', apiRooms);
+              setRooms(apiRooms);
+              // Fetch photos for rooms
+              fetchRoomPhotos(roomsResponse.data);
+            } else {
+              console.log('[FETCH DEBUG] No rooms found in database');
+              
+              // If no rooms in database, check localStorage as fallback
+              const savedRooms = JSON.parse(localStorage.getItem(`property_${id}_rooms`) || '[]');
+              console.log('[FETCH DEBUG] Checking localStorage as fallback:', savedRooms);
+
+              if (savedRooms.length > 0) {
+                console.log('[FETCH DEBUG] Found rooms in localStorage, formatting...');
+                // Convert the saved room data to the format expected by the component
+                const formattedRooms = savedRooms.map(room => ({
                   id: room.roomId,
                   name: room.roomName,
                   type: room.roomType,
@@ -275,19 +475,14 @@ export default function AddRooms() {
                   roomIssueNotes: room.roomIssueNotes || [],
                   timestamp: room.timestamp
                 }));
-
-                // Store in localStorage for later use
-                localStorage.setItem(`property_${id}_rooms`, JSON.stringify(roomsResponse.data));
-
-                // Set state
-                console.log('[FETCH DEBUG] Setting rooms state with API rooms:', apiRooms);
-                setRooms(apiRooms);
-              } else {
-                console.log('[FETCH DEBUG] No rooms found in database either');
+                console.log('[FETCH DEBUG] Setting rooms state with formatted rooms:', formattedRooms);
+                setRooms(formattedRooms);
+                // Fetch photos for rooms
+                fetchRoomPhotos(savedRooms);
               }
-            } catch (error) {
-              console.error('Error loading rooms from API:', error);
             }
+          } catch (error) {
+            console.error('Error loading rooms from API:', error);
           }
           
           // Fetch property data from API
@@ -312,6 +507,8 @@ export default function AddRooms() {
                 timestamp: room.timestamp
               }));
               setRooms(formattedRooms);
+              // Fetch photos for rooms
+              fetchRoomPhotos(savedRooms);
             }
           } catch (e) {
             console.error('Error loading rooms from localStorage:', e);
@@ -332,32 +529,68 @@ export default function AddRooms() {
     const roomName = router.query.roomName;
     const roomType = router.query.roomType;
     const roomId = router.query.roomId;
+    const timestamp = router.query.t;
     
     // Debug logları ekleyelim
     console.log('[DEBUG] Current router.query:', router.query);
     console.log('[DEBUG] Current ID param:', id);
     console.log('[DEBUG] Current success param:', success);
+    console.log('[DEBUG] Current timestamp param:', timestamp);
     console.log('[DEBUG] Current localStorage rooms:', JSON.parse(localStorage.getItem(`property_${id}_rooms`) || '[]'));
     
-    // If we got a success parameter, we're returning from another page
-    if (success) {
+    // If we got a success parameter or timestamp, we're returning from another page
+    if (success || timestamp) {
       // Check if we're returning from the upload-photos page
       if (success === 'true' && !roomName) {
         console.log('Returning from upload-photos page with success');
-        // Just make sure we have the latest room data from localStorage
+        // Fetch fresh data from the database
         if (id) {
-          const savedRooms = JSON.parse(localStorage.getItem(`property_${id}_rooms`) || '[]');
-          if (savedRooms.length > 0) {
-            const formattedRooms = savedRooms.map(room => ({
-              id: room.roomId,
-              name: room.roomName,
-              type: room.roomType,
-              photoCount: room.photoCount || 0,
-              roomQuality: room.roomQuality || null,
-              roomIssueNotes: room.roomIssueNotes || [],
-              timestamp: room.timestamp
-            }));
-            setRooms(formattedRooms);
+          try {
+            console.log('[REFRESH DEBUG] Fetching fresh room data from API...');
+            apiService.properties.getRooms(id).then(roomsResponse => {
+              console.log('[REFRESH DEBUG] API response for rooms:', roomsResponse.data);
+              
+              if (roomsResponse.data && roomsResponse.data.length > 0) {
+                // Format and use the rooms from the database
+                const apiRooms = roomsResponse.data.map(room => ({
+                  id: room.roomId,
+                  name: room.roomName,
+                  type: room.roomType,
+                  photoCount: room.photoCount || 0,
+                  roomQuality: room.roomQuality || null,
+                  roomIssueNotes: room.roomIssueNotes || [],
+                  timestamp: room.timestamp
+                }));
+                
+                // Update localStorage
+                localStorage.setItem(`property_${id}_rooms`, JSON.stringify(roomsResponse.data));
+                
+                // Set state
+                console.log('[REFRESH DEBUG] Setting rooms state with fresh API rooms:', apiRooms);
+                setRooms(apiRooms);
+                // Fetch photos for rooms
+                fetchRoomPhotos(roomsResponse.data);
+              }
+            }).catch(error => {
+              console.error('[REFRESH DEBUG] Error fetching fresh room data:', error);
+              // Fall back to localStorage if API fails
+              const savedRooms = JSON.parse(localStorage.getItem(`property_${id}_rooms`) || '[]');
+              if (savedRooms.length > 0) {
+                const formattedRooms = savedRooms.map(room => ({
+                  id: room.roomId,
+                  name: room.roomName,
+                  type: room.roomType,
+                  photoCount: room.photoCount || 0,
+                  roomQuality: room.roomQuality || null,
+                  roomIssueNotes: room.roomIssueNotes || [],
+                  timestamp: room.timestamp
+                }));
+                setRooms(formattedRooms);
+                fetchRoomPhotos(savedRooms);
+              }
+            });
+          } catch (error) {
+            console.error('[REFRESH DEBUG] Error in refresh logic:', error);
           }
         }
       }
@@ -397,6 +630,39 @@ export default function AddRooms() {
           });
         }
       }
+      // If we just have a timestamp (from upload-photos navigation), refresh rooms
+      else if (timestamp && !success) {
+        console.log('[TIMESTAMP DEBUG] Timestamp detected, refreshing room data from API...');
+        if (id) {
+          apiService.properties.getRooms(id).then(roomsResponse => {
+            console.log('[TIMESTAMP DEBUG] API response for rooms:', roomsResponse.data);
+            
+            if (roomsResponse.data && roomsResponse.data.length > 0) {
+              // Format and use the rooms from the database
+              const apiRooms = roomsResponse.data.map(room => ({
+                id: room.roomId,
+                name: room.roomName,
+                type: room.roomType,
+                photoCount: room.photoCount || 0,
+                roomQuality: room.roomQuality || null,
+                roomIssueNotes: room.roomIssueNotes || [],
+                timestamp: room.timestamp
+              }));
+              
+              // Update localStorage
+              localStorage.setItem(`property_${id}_rooms`, JSON.stringify(roomsResponse.data));
+              
+              // Set state
+              console.log('[TIMESTAMP DEBUG] Setting rooms state with fresh API rooms:', apiRooms);
+              setRooms(apiRooms);
+              // Fetch photos for rooms
+              fetchRoomPhotos(roomsResponse.data);
+            }
+          }).catch(error => {
+            console.error('[TIMESTAMP DEBUG] Error fetching fresh room data:', error);
+          });
+        }
+      }
       
       // Use setTimeout to avoid potential React render issues
       setTimeout(() => {
@@ -414,6 +680,59 @@ export default function AddRooms() {
     setCurrentEditingRoom('new');
   };
   
+  // Delete room function
+  const deleteRoom = async (e, roomId) => {
+    // Stop event propagation to prevent card click
+    e.stopPropagation();
+
+    console.log('[DEBUG] Attempting to delete room with ID:', roomId);
+
+    // Confirm deletion
+    if (confirm('Are you sure you want to delete this room?')) {
+      try {
+        // Delete room from backend
+        console.log('[DEBUG] Sending delete request for room:', roomId, 'property:', id);
+        const deleteResponse = await apiService.properties.deleteRoom(id, roomId);
+        console.log('[DEBUG] Delete response:', deleteResponse.data);
+        console.log('[DEBUG] Room deleted from backend:', roomId);
+
+        // Update localStorage after backend deletion
+        const savedRooms = JSON.parse(localStorage.getItem(`property_${id}_rooms`) || '[]');
+        
+        // Filter by roomId or string format
+        const updatedRooms = savedRooms.filter(room => {
+          const currentRoomId = room.roomId || room.id;
+          return currentRoomId !== roomId && currentRoomId !== String(roomId);
+        });
+        
+        localStorage.setItem(`property_${id}_rooms`, JSON.stringify(updatedRooms));
+
+        // Update rooms on screen - with string/number check
+        setRooms(rooms.filter(room => room.id !== roomId && room.id !== String(roomId)));
+
+        // Clean up room photos
+        try {
+          localStorage.removeItem(`property_${id}_room_${roomId}_photos`);
+
+          // Remove from shared photos object
+          const allRoomPhotos = JSON.parse(localStorage.getItem(`property_${id}_room_photos`) || '{}');
+          if (allRoomPhotos[roomId]) {
+            delete allRoomPhotos[roomId];
+            localStorage.setItem(`property_${id}_room_photos`, JSON.stringify(allRoomPhotos));
+            console.log('[DEBUG] Removed photos for room:', roomId);
+          }
+        } catch (photoError) {
+          console.error('Error deleting room photos:', photoError);
+        }
+
+        // Success - no toast message as per original
+      } catch (error) {
+        console.error('Error deleting room:', error);
+        // Error - no toast message as per original
+      }
+    }
+  };
+
   const handleRoomTypeSelect = (type) => {
     setShowRoomTypeSelector(false);
     
@@ -454,18 +773,6 @@ export default function AddRooms() {
     }
   };
   
-  const deleteRoom = (roomId) => {
-    // Find the room and remove from state
-    const newRooms = rooms.filter(room => room.id !== roomId);
-    setRooms(newRooms);
-    
-    // Also remove from localStorage
-    if (id) {
-      const savedRooms = JSON.parse(localStorage.getItem(`property_${id}_rooms`) || '[]');
-      const updatedSavedRooms = savedRooms.filter(room => room.roomId !== roomId);
-      localStorage.setItem(`property_${id}_rooms`, JSON.stringify(updatedSavedRooms));
-    }
-  };
   
   const updateRoomName = (roomId, newName) => {
     // Update the room name in the state
@@ -518,18 +825,104 @@ export default function AddRooms() {
       console.log('Saving rooms to API:', roomsToSave);
       await apiService.properties.saveRooms(id, roomsToSave);
 
-      toast.success('Rooms saved to database successfully!');
+      // Removed success toast message
     } catch (error) {
       console.error('Error saving rooms to database:', error);
       toast.error('Rooms saved locally, but failed to sync with database. You can continue.');
     }
 
-    // Navigate to the property details page
+    // Navigate to the landlord details page to complete property setup
     setTimeout(() => {
       // Use window.location for most reliable navigation
-      window.location.href = `/properties/${id}`;
+      window.location.href = `/properties/${id}/landlord-details`;
     }, 1000);
   };
+
+  // Fetch photos for rooms
+  const fetchRoomPhotos = async (roomsList) => {
+    try {
+      if (!id || !roomsList || !Array.isArray(roomsList)) {
+        console.log('No property ID or rooms list, skipping photo fetch');
+        return;
+      }
+
+      console.log('Fetching photos for all rooms in property:', id);
+      
+      try {
+        // Fetch all photos for the property
+        const response = await apiService.photos.getByProperty(id);
+        console.log('Property photos from API:', response.data);
+        
+        if (response.data) {
+          let photosByRoom = {};
+          
+          // Use photosByRoom from API response if available
+          if (response.data.photosByRoom) {
+            console.log('Using photosByRoom from API response');
+            photosByRoom = response.data.photosByRoom;
+          }
+          // Otherwise, group photos by room_id
+          else if (Array.isArray(response.data)) {
+            console.log('Grouping photos by room_id');
+            
+            // Group each photo by its room
+            response.data.forEach(photo => {
+              if (photo.room_id) {
+                if (!photosByRoom[photo.room_id]) {
+                  photosByRoom[photo.room_id] = { photos: [] };
+                }
+                photosByRoom[photo.room_id].photos.push({
+                  ...photo,
+                  url: photo.url || `/uploads/${photo.file_path}`
+                });
+              }
+            });
+          }
+          
+          console.log('Final photosByRoom:', photosByRoom);
+          setRoomPhotos(photosByRoom);
+        }
+      } catch (error) {
+        console.error('Error fetching photos from API:', error);
+      }
+    } catch (error) {
+      console.error('Failed to fetch room photos:', error);
+    }
+  };
+
+  // Check if property setup is complete
+  useEffect(() => {
+    const checkPropertySetupComplete = () => {
+      // Property should have basic info (address, description) and at least one room with photos
+      const hasBasicInfo = property && property.address && property.description;
+      const hasRooms = rooms && rooms.length > 0;
+      const hasCompletedRoom = rooms.some(room => {
+        const isCompleted = room.isCompleted || (parseInt(room.photoCount) > 0 && 
+          (room.roomQuality === 'good' || (room.roomQuality === 'attention' && Array.isArray(room.roomIssueNotes) && room.roomIssueNotes.length > 0)));
+        return isCompleted && room.photoCount > 0;
+      });
+      
+      console.log('Property setup check:', {
+        hasBasicInfo,
+        hasRooms,
+        hasCompletedRoom,
+        property: property ? { address: property.address, description: property.description } : null,
+        roomsCount: rooms.length,
+        completedRooms: rooms.filter(room => {
+          const isCompleted = room.isCompleted || (parseInt(room.photoCount) > 0 && 
+            (room.roomQuality === 'good' || (room.roomQuality === 'attention' && Array.isArray(room.roomIssueNotes) && room.roomIssueNotes.length > 0)));
+          return isCompleted && room.photoCount > 0;
+        }).length
+      });
+      
+      const isComplete = hasBasicInfo && hasRooms && hasCompletedRoom;
+      setIsPropertySetupComplete(isComplete);
+    };
+
+    if (property !== null && rooms !== null && !isLoading) {
+      checkPropertySetupComplete();
+    }
+  }, [property, rooms, isLoading]);
 
   // Handle Enter key globally
   useEffect(() => {
@@ -683,13 +1076,53 @@ export default function AddRooms() {
           <div className="flex flex-row items-center px-[20px] pt-[60px] pb-[20px] relative">
             <button 
               className="flex items-center relative z-10 hover:opacity-75 transition-opacity duration-200"
-              onClick={() => router.back()}
+              onClick={async () => {
+                // Check if property is incomplete and should be deleted
+                const isIncomplete = localStorage.getItem(`property_${id}_incomplete`);
+                
+                if (isIncomplete === 'true' && id) {
+                  // Delete the incomplete property
+                  try {
+                    console.log('Deleting incomplete property:', id);
+                    await apiService.properties.delete(id);
+                    
+                    // Clean up localStorage
+                    localStorage.removeItem(`property_${id}_incomplete`);
+                    localStorage.removeItem(`property_${id}_addunit`);
+                    localStorage.removeItem(`property_${id}_rooms`);
+                    
+                    console.log('Incomplete property deleted successfully');
+                    router.push('/properties/addunit');
+                  } catch (deleteError) {
+                    console.error('Error deleting incomplete property:', deleteError);
+                    
+                    // Clean up localStorage regardless
+                    localStorage.removeItem(`property_${id}_incomplete`);
+                    localStorage.removeItem(`property_${id}_addunit`);
+                    localStorage.removeItem(`property_${id}_rooms`);
+                    
+                    // If property not found (404), go to dashboard
+                    if (deleteError.response && deleteError.response.status === 404) {
+                      console.log('Property not found, redirecting to dashboard');
+                      router.push('/');
+                    } else {
+                      // For other errors, go back to addunit
+                      router.push('/properties/addunit');
+                    }
+                  }
+                } else if (id) {
+                  // Property is complete, go to dashboard
+                  router.push('/');
+                } else {
+                  router.back();
+                }
+              }}
               aria-label="Go back"
             >
               <ArrowLeftIcon />
             </button>
             <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
-              Room Management
+              {property?.description || property?.address || 'Property Details'}
             </h1>
           </div>
         </div>
@@ -705,91 +1138,63 @@ export default function AddRooms() {
               {/* Content Section */}
               <div className="pt-6">
                 <div className="max-w-[480px] mx-auto">
-              <h2 className="font-bold text-[16px] leading-[22px] text-[#0B1420]">
-                Let's build your walkthrough one room at a time 📂
-              </h2>
-              <p className="font-normal text-[14px] leading-[19px] text-[#515964] mt-1">
-                Add rooms one by one so we can help you document everything properly.
-              </p>
-              </div>
-            </div>
-            
-            {/* Add New Room Button */}
-            <div className="py-4">
-              <button 
-                type="button"
-                onClick={addNewRoom}
-                className="btn-add w-full h-[56px] flex justify-center items-center bg-white border border-[#D1E7D5] rounded-[16px] hover:border-[#1C2C40] transition-colors duration-200"
-              >
-                <div className="flex flex-row items-center gap-[4px]">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M6 12H18" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12 18V6" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <span className="font-bold text-[14px] leading-[19px] text-[#515964]">
-                    Add New Room
-                  </span>
+                  <h2 className="font-bold text-[16px] leading-[22px] text-[#0B1420]">
+                    Let's build your walkthrough one room at a time 📂
+                  </h2>
+                  <p className="font-normal text-[14px] leading-[19px] text-[#515964] mt-1">
+                    Add rooms one by one so we can help you document everything properly.
+                  </p>
                 </div>
-              </button>
-            </div>
-          </div>
-          
-            {/* Room List */}
-            <div className="pb-24">
-              <div className="flex flex-col gap-[10px]">
-                {rooms.map((room, index) => (
-                  <div 
-                    key={index} 
-                    className="room-card box-border flex flex-col w-full p-[16px] bg-white border border-[#D1E7D5] rounded-[16px] cursor-pointer hover:border-[#1C2C40] transition-colors duration-200"
-                    onClick={() => {
-                      if (id) {
-                        // Use window.location for direct navigation
-                        const url = `/properties/${id}/upload-photos?roomName=${encodeURIComponent(room.name)}&roomType=${encodeURIComponent(room.type)}&roomId=${encodeURIComponent(room.id)}`;
-                        window.location.href = url;
-                      } else {
-                        console.error('Missing ID parameter for navigation');
-                      }
-                    }}
-                  >
-                    <div className="flex flex-row justify-between w-full">
-                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-row items-center gap-1">
-                          <span className="font-bold text-[14px] leading-[19px] text-[#0B1420]">
-                            {room.name}
-                          </span>
-                          {room.roomQuality === 'attention' && room.roomIssueNotes && room.roomIssueNotes.length > 0 && (
-                            <span className="font-semibold text-[14px] leading-[19px] text-[#515964]">
-                              ({room.roomIssueNotes.length} {room.roomIssueNotes.length === 1 ? 'item' : 'items'} noted)
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex flex-row items-center gap-1">
-                          <div className="flex">
-                            {/* Photo thumbnails (simulated) */}
-                            {Array.from({ length: Math.min(room.photoCount, 4) }).map((_, i) => (
-                              <div 
-                                key={i} 
-                                className="w-[18px] h-[18px] rounded-[14px] bg-gray-200 border border-[#D1E7E2]"
-                                style={{ marginLeft: i > 0 ? '-8px' : '0' }}
-                              ></div>
-                            ))}
-                          </div>
-                          {room.photoCount > 0 && (
-                            <span className="font-semibold text-[12px] leading-[16px] text-[#515964] ml-2">
-                              ({room.photoCount} {room.photoCount === 1 ? 'Photo' : 'Photos'})
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center">
-                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M5.94001 13.2799L10.6 8.61989C11.14 8.07989 11.14 7.17989 10.6 6.63989L5.94001 1.97989" 
-                            stroke="#1C2C40" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    </div>
+              </div>
+              
+              {/* Room List */}
+              <div className="pt-6">
+                {rooms.length > 0 && (
+                  <AnimatePresence>
+                    {rooms.map((room, index) => {
+                      // Ensure room has required properties for RoomCard
+                      const roomWithCompleteData = {
+                        ...room,
+                        isCompleted: room.isCompleted || (parseInt(room.photoCount) > 0 && 
+                          (room.roomQuality === 'good' || (room.roomQuality === 'attention' && Array.isArray(room.roomIssueNotes) && room.roomIssueNotes.length > 0))),
+                        itemsNoted: Array.isArray(room.roomIssueNotes) ? room.roomIssueNotes.length : 0
+                      };
+                      
+                      return (
+                        <RoomCard 
+                          key={room.id || index}
+                          room={roomWithCompleteData}
+                          index={index}
+                          router={router}
+                          id={id}
+                          deleteRoom={deleteRoom}
+                          roomPhotos={roomPhotos}
+                          apiService={apiService}
+                          getRoomPhotoUrl={getRoomPhotoUrl}
+                        />
+                      );
+                    })}
+                  </AnimatePresence>
+                )}
+              </div>
+              
+              {/* Add New Room Button */}
+              <div className="py-4 pb-24">
+                <button 
+                  type="button"
+                  onClick={addNewRoom}
+                  className="btn-add w-full h-[56px] flex justify-center items-center bg-white border border-[#D1E7D5] rounded-[16px] hover:border-[#1C2C40] transition-colors duration-200"
+                >
+                  <div className="flex flex-row items-center gap-[4px]">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M6 12H18" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M12 18V6" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <span className="font-bold text-[14px] leading-[19px] text-[#515964]">
+                      Add New Room
+                    </span>
                   </div>
-                ))}
+                </button>
               </div>
             </div>
             

@@ -97,35 +97,37 @@ export default function UserDetails() {
       // Pre-fill with user data if available
       setName(user.name || '');
       setEmail(user.email || '');
-      
+    }
+  }, [user, authLoading, router]);
+  
+  // Load saved user details if they exist
+  useEffect(() => {
+    const propertyID = id || propertyId;
+    if (propertyID) {
       // Try to load from localStorage
-      if (typeof window !== 'undefined') {
-        const propertyKey = `property_${id || propertyId}`;
-        const savedUserDetails = localStorage.getItem(`${propertyKey}_user`);
-        
-        if (savedUserDetails) {
-          try {
-            const details = JSON.parse(savedUserDetails);
-            setName(details.name || user.name || '');
-            setEmail(details.email || user.email || '');
-            setPhone(details.phone || '');
-            
-            // Check if there's a saved signature
-            if (details.hasSignature) {
-              const savedSignature = localStorage.getItem(`${propertyKey}_user_signature`);
-              if (savedSignature) {
-                setSignature({
-                  preview: savedSignature
-                });
-              }
-            }
-          } catch (e) {
-            console.error('Error parsing saved user details:', e);
+      const savedUserData = localStorage.getItem(`property_${propertyID}_user`);
+      if (savedUserData) {
+        try {
+          const userData = JSON.parse(savedUserData);
+          console.log('Loading saved user data:', userData);
+          setName(userData.name || '');
+          setEmail(userData.email || '');
+          setPhone(userData.phone || '');
+          
+          // Load signature if exists
+          const savedSignature = localStorage.getItem(`property_${propertyID}_user_signature`);
+          if (savedSignature && userData.hasSignature) {
+            setSignature({
+              preview: savedSignature,
+              timestamp: userData.savedAt
+            });
           }
+        } catch (error) {
+          console.error('Error loading saved user data:', error);
         }
       }
     }
-  }, [user, authLoading, router, id, propertyId]);
+  }, [id, propertyId]);
   
   // Initialize the signature pad when it's opened
   useEffect(() => {
@@ -402,7 +404,14 @@ export default function UserDetails() {
         <div className="flex flex-row justify-center items-center py-[20px] px-[10px] gap-[10px] w-full h-[65px] safe-area-inset-left safe-area-inset-right">
           <button
             className="absolute left-[20px] top-[50%] transform -translate-y-1/2 p-2"
-            onClick={() => router.back()}
+            onClick={() => {
+              const propertyID = id || propertyId;
+              if (propertyID) {
+                router.push(`/properties/${propertyID}/landlord-details`);
+              } else {
+                router.back();
+              }
+            }}
             aria-label="Go back"
           >
             <ArrowLeftIcon />

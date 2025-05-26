@@ -136,12 +136,12 @@ export default function PropertyRedirect() {
         else {
           // Eksik bilgiler var, normal mülk düzenleme sayfasına git
           console.log("Redirecting to regular property page - some property info is missing");
-          router.replace(`/properties/${id}/index-new`);
+          router.replace(`/properties/${id}/add-rooms`);
         }
       } catch (error) {
         console.error('Error checking property status:', error);
         // On error, go to standard property page
-        router.replace(`/properties/${id}/index-new`);
+        router.replace(`/properties/${id}/add-rooms`);
       } finally {
         setLoading(false);
       }

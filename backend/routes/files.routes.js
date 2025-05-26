@@ -3,25 +3,11 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const sharp = require('sharp');
 const authMiddleware = require('../middleware/auth.middleware');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join(__dirname, '..', 'uploads');
-    // Create uploads directory if it doesn't exist
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    // Generate unique filename
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const extension = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + extension);
-  }
-});
+// Configure multer for file uploads - use memory storage for compression
+const storage = multer.memoryStorage();
 
 // File filter to only accept certain file types
 const fileFilter = (req, file, cb) => {
@@ -42,22 +28,70 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
-// Upload file endpoint
+// Upload file endpoint with compression
 router.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
     }
 
+    const uploadDir = path.join(__dirname, '..', 'uploads');
+    // Create uploads directory if it doesn't exist
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    // Generate unique filename
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const originalExtension = path.extname(req.file.originalname).toLowerCase();
+    let fileName;
+    let filePath;
+
+    // Check if file is an image that should be compressed
+    const isImage = /\.(jpg|jpeg|png)$/i.test(req.file.originalname);
+    
+    if (isImage) {
+      // Compress image using sharp
+      fileName = `file-${uniqueSuffix}.jpg`; // Always save as JPEG for compression
+      filePath = path.join(uploadDir, fileName);
+      
+      console.log(`Compressing image: ${req.file.originalname}`);
+      
+      await sharp(req.file.buffer)
+        .resize(1200, null, { // Max width 1200px, maintain aspect ratio
+          withoutEnlargement: true
+        })
+        .jpeg({ 
+          quality: 60, // 60% quality for better compression
+          progressive: true // Progressive JPEG for better loading
+        })
+        .toFile(filePath);
+        
+      console.log(`Image compressed and saved as: ${fileName}`);
+    } else {
+      // For non-image files (PDF, DOC, etc.), save as-is
+      fileName = `file-${uniqueSuffix}${originalExtension}`;
+      filePath = path.join(uploadDir, fileName);
+      
+      fs.writeFileSync(filePath, req.file.buffer);
+      console.log(`Non-image file saved as: ${fileName}`);
+    }
+
+    // Get the actual file size after compression
+    const stats = fs.statSync(filePath);
+    const fileSize = stats.size;
+    
     // Construct file URL
-    const fileUrl = `/uploads/${req.file.filename}`;
+    const fileUrl = `/uploads/${fileName}`;
     
     res.json({
       message: 'File uploaded successfully',
-      fileName: req.file.filename,
+      fileName: fileName,
       originalName: req.file.originalname,
       fileUrl: fileUrl,
-      size: req.file.size,
+      size: fileSize,
+      originalSize: req.file.size,
+      compressionRatio: isImage ? ((1 - fileSize / req.file.size) * 100).toFixed(2) + '%' : 'N/A',
       mimetype: req.file.mimetype
     });
   } catch (error) {

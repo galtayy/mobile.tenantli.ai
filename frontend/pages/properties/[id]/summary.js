@@ -788,6 +788,29 @@ export default function PropertySummary() {
     }
   };
 
+  const formatDateWithMonthName = (dateString) => {
+    if (!dateString) return 'Not specified';
+
+    try {
+      const date = new Date(dateString);
+
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        console.error("Invalid date:", dateString);
+        return 'Not specified';
+      }
+
+      return date.toLocaleDateString('en-US', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return 'Not specified';
+    }
+  };
+
   // Format currency
   const formatCurrency = (amount) => {
     if (!amount && amount !== 0) return 'Not specified';
@@ -927,7 +950,7 @@ export default function PropertySummary() {
         <div className="h-[65px] bg-[#FBF5DA] shadow-sm">
           <div className="flex items-center justify-center relative h-full px-4">
             <Link
-              href="/"
+              href={from === 'walkthrough' ? '/' : `/properties/${id}/user-details`}
               className="absolute left-4 p-2 hover:bg-black/5 rounded-lg transition-colors duration-200"
               aria-label="Go back"
             >
@@ -986,7 +1009,7 @@ export default function PropertySummary() {
                     Move out Date
                   </span>
                   <span className="text-sm font-bold text-[#1C2C40] text-right flex-1 ml-4">
-                    {formatDate(propertyDetails.contract_end_date)}
+                    {formatDateWithMonthName(propertyDetails.contract_end_date)}
                   </span>
                 </div>
 

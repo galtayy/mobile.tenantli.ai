@@ -154,6 +154,7 @@ export default function UploadPhotos() {
   const [roomIssueNote, setRoomIssueNote] = useState('');
   const [roomIssueNotes, setRoomIssueNotes] = useState([]);
   const [showIssueInput, setShowIssueInput] = useState(false);
+  const [actualRoomName, setActualRoomName] = useState(roomName || '');
 
   useEffect(() => {
     if (!loading && !user) {
@@ -169,6 +170,13 @@ export default function UploadPhotos() {
       router.push('/properties');
     }
   }, [id, router, loading]);
+
+  // Update actualRoomName when roomName query parameter changes
+  useEffect(() => {
+    if (roomName && !actualRoomName) {
+      setActualRoomName(roomName);
+    }
+  }, [roomName, actualRoomName]);
 
   // Load existing photos and room data when component mounts
   useEffect(() => {
@@ -205,6 +213,11 @@ export default function UploadPhotos() {
               console.log(`[DEBUG] Room data for roomId=${roomId}:`, roomData);
               
               if (roomData) {
+                // Set room name from database data
+                if (roomData.roomName) {
+                  setActualRoomName(roomData.roomName);
+                }
+                
                 // Set room quality if it exists
                 if (roomData.roomQuality) {
                   setRoomQuality(roomData.roomQuality);
@@ -480,10 +493,10 @@ export default function UploadPhotos() {
             console.log('[DEBUG] Navigating back to:', returnUrl);
             router.push(returnUrl);
           } else if (id) {
-            // Navigate to index-new page with timestamp to prevent caching
+            // Navigate to add-rooms page with timestamp to prevent caching
             const timestamp = new Date().getTime();
-            console.log('[DEBUG] Navigating to index-new page');
-            router.push(`/properties/${id}/index-new?t=${timestamp}`);
+            console.log('[DEBUG] Navigating to add-rooms page');
+            router.push(`/properties/${id}/add-rooms?t=${timestamp}`);
           } else {
             console.error('[ERROR] Missing ID for navigation');
             router.push('/properties');
@@ -493,8 +506,8 @@ export default function UploadPhotos() {
           if (returnUrl) {
             window.location.href = returnUrl;
           } else if (id) {
-            // Use location.href fallback for index-new page
-            window.location.href = `/properties/${id}/index-new?t=${new Date().getTime()}`;
+            // Use location.href fallback for add-rooms page
+            window.location.href = `/properties/${id}/add-rooms?t=${new Date().getTime()}`;
           } else {
             window.location.href = '/properties';
           }
@@ -621,7 +634,7 @@ export default function UploadPhotos() {
             onClick={(e) => {
               e.preventDefault();
               if (id) {
-                router.push(`/properties/${id}`);
+                router.push(`/properties/${id}/configure-room`);
               } else {
                 router.push('/');
               }
@@ -640,7 +653,7 @@ export default function UploadPhotos() {
       <div className="fixed left-0 right-0 w-full px-5 bg-[#FBF5DA]" style={{top: '105px', zIndex: 10}}>
         <div className="w-full max-w-[350px] mx-auto safe-area-inset-left safe-area-inset-right">
           <h2 className="font-bold text-[16px] sm:text-[18px] leading-[22px] text-[#0B1420]">
-            Let's document "{roomName || 'Room'}" 📷
+            Let's document "{actualRoomName || 'Room'}" 📷
           </h2>
           <p className="font-normal text-[14px] leading-[19px] text-[#515964] mt-1">
             Capture the condition of this room so you're protected later

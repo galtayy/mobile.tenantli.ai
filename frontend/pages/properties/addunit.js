@@ -119,7 +119,7 @@ export default function AddUnit() {
   const [contractStartDate, setContractStartDate] = useState('');
   const [leaseDuration, setLeaseDuration] = useState('');
   const [leaseDurationType, setLeaseDurationType] = useState('months');
-  const [leaseDocument, setLeaseDocument] = useState(null);
+  const [leaseDocuments, setLeaseDocuments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDurationTypeSelector, setShowDurationTypeSelector] = useState(false);
   const [animationClass, setAnimationClass] = useState('');
@@ -144,7 +144,6 @@ export default function AddUnit() {
     const finalAddress = addressInputRef.current?.value || address;
     return propertyName && 
            finalAddress && 
-           unitNumber && 
            depositAmount && 
            contractStartDate && 
            leaseDuration;
@@ -574,33 +573,44 @@ export default function AddUnit() {
     return end.toISOString().split('T')[0];
   };
 
-  // Handle file selection
+  // Handle file selection - support multiple files
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Check file size (5MB limit)
+    const files = Array.from(e.target.files);
+    const validFiles = [];
+    
+    for (const file of files) {
+      // Check file size (5MB limit per file)
       if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
-        return;
+        alert(`${file.name} is larger than 5MB and will be skipped`);
+        continue;
       }
       
       // Check file type
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
       if (!allowedTypes.includes(file.type)) {
-        alert('Please upload a PDF or image file (JPG, PNG)');
-        return;
+        alert(`${file.name} is not a supported file type (PDF, JPG, PNG) and will be skipped`);
+        continue;
       }
       
-      setLeaseDocument(file);
-      console.log('Lease document selected:', file.name);
+      validFiles.push(file);
     }
+    
+    if (validFiles.length > 0) {
+      setLeaseDocuments(prevDocs => [...prevDocs, ...validFiles]);
+      console.log('Lease documents selected:', validFiles.map(f => f.name).join(', '));
+    }
+  };
+  
+  // Remove a selected file
+  const removeDocument = (index) => {
+    setLeaseDocuments(prevDocs => prevDocs.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // If form is already valid and a lease document is uploaded, don't show validation messages
-    if (isFormValid() && leaseDocument) {
+    // If form is already valid and lease documents are uploaded, don't show validation messages
+    if (isFormValid() && leaseDocuments.length > 0) {
       // Skip validation and proceed directly
     } else {
       // Clear previous errors
@@ -628,10 +638,7 @@ export default function AddUnit() {
         hasErrors = true;
       }
       
-      if (!unitNumber) {
-        newErrors.unitNumber = 'Please enter a unit number';
-        hasErrors = true;
-      }
+      // Unit number is now optional, so we don't validate it
       
       if (!depositAmount) {
         newErrors.depositAmount = 'Please enter deposit amount';
@@ -681,16 +688,8 @@ export default function AddUnit() {
         squareFootage,
         yearBuilt,
         parkingSpaces,
-        leaseDocument: leaseDocument ? leaseDocument.name : null
+        leaseDocuments: leaseDocuments.map(doc => doc.name)
       };
-
-      // Save to temporary localStorage in case the API call fails
-      try {
-        localStorage.setItem('temp_addunit_data', JSON.stringify(formData));
-        console.log('Saved form data to temporary localStorage');
-      } catch (tempError) {
-        console.error('Error saving temporary data:', tempError);
-      }
 
       // Just use the state value for consistency
       const finalAddress = address;
@@ -719,7 +718,10 @@ export default function AddUnit() {
         parking_spaces: parkingSpaces,
         // Initialize lease document fields as null
         lease_document_url: null,
-        lease_document_name: null
+        lease_document_name: null,
+        // Mark as incomplete for tracking
+        setup_completed: false,
+        created_at: new Date().toISOString()
       };
 
       // Remove fields that might cause issues with the current database schema
@@ -736,104 +738,99 @@ export default function AddUnit() {
         safePropertyData.unit_number = unitNumber;
       }
       
-      // If we have a lease document, include it in the initial creation
-      if (leaseDocument) {
-        // We'll add the URL after upload, but mark that we have a document pending
-        safePropertyData.lease_document_name = leaseDocument.name;
+      // If we have lease documents, mark that we have documents pending
+      if (leaseDocuments.length > 0) {
+        // We'll add the URLs after upload, but mark that we have documents pending
+        safePropertyData.lease_document_name = leaseDocuments.map(doc => doc.name).join(', ');
       }
       
-      console.log('Sending property data to API with unit_number:', safePropertyData.unit_number);
+      console.log('Creating incomplete property that will be completed later:', safePropertyData);
       
       // Submit the property data
       const response = await apiService.properties.create(safePropertyData);
       
-      // If we have a lease document, upload it
-      if (leaseDocument) {
+      // If we have lease documents, upload them
+      if (leaseDocuments.length > 0) {
         try {
-          // Create a FormData instance to handle file upload
-          const fileFormData = new FormData();
-          fileFormData.append('file', leaseDocument);
-          fileFormData.append('propertyId', response.data.id);
-          fileFormData.append('fileType', 'lease');
-          
-          // Use axios directly for file upload
+          const uploadedDocuments = [];
           const isProduction = typeof window !== 'undefined' ? window.location.hostname !== 'localhost' : false;
           const apiUrl = isProduction ? 'https://api.tenantli.ai' : 'http://localhost:5050';
           const token = localStorage.getItem('token');
-          
           const axios = (await import('axios')).default;
-          const uploadResponse = await axios.post(
-            `${apiUrl}/api/files/upload`, 
-            fileFormData,
-            {
-              headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`
-              },
-              onUploadProgress: (progressEvent) => {
-                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                setUploadProgress(percentCompleted);
-              }
-            }
-          );
           
-         // console.log('Lease document uploaded successfully');
+          // Upload each document
+          for (let i = 0; i < leaseDocuments.length; i++) {
+            const document = leaseDocuments[i];
+            const fileFormData = new FormData();
+            fileFormData.append('file', document);
+            fileFormData.append('propertyId', response.data.id);
+            fileFormData.append('fileType', 'lease');
+            
+            try {
+              const uploadResponse = await axios.post(
+                `${apiUrl}/api/files/upload`, 
+                fileFormData,
+                {
+                  headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  onUploadProgress: (progressEvent) => {
+                    // Calculate overall progress
+                    const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                    const overallProgress = Math.round(((i * 100) + fileProgress) / leaseDocuments.length);
+                    setUploadProgress(overallProgress);
+                  }
+                }
+              );
+              
+              if (uploadResponse.data && uploadResponse.data.fileUrl) {
+                uploadedDocuments.push({
+                  url: uploadResponse.data.fileUrl,
+                  name: uploadResponse.data.originalName || document.name
+                });
+              }
+            } catch (fileUploadError) {
+              console.error(`Error uploading document ${document.name}:`, fileUploadError);
+              alert(`Failed to upload ${document.name}. Other documents will continue uploading.`);
+            }
+          }
+          
           setUploadStatus('success');
           
-          // Store the uploaded file info with the property
-          if (uploadResponse.data && uploadResponse.data.fileUrl) {
-            // Store lease document info in localStorage as a temporary workaround
-            // Update property with lease document URL and original filename
+          // Store the uploaded documents info
+          if (uploadedDocuments.length > 0) {
             try {
-              console.log('Attempting to update property with lease document info:');
-              console.log('- Property ID:', response.data.id);
-              console.log('- Lease URL:', uploadResponse.data.fileUrl);
-              console.log('- Lease Name:', uploadResponse.data.originalName || leaseDocument.name);
-              
-              // Debug the API call
-              console.log('Making update API call...');
+              // Update property with lease documents info
               const updatePayload = {
-                lease_document_url: uploadResponse.data.fileUrl,
-                lease_document_name: uploadResponse.data.originalName || leaseDocument.name
+                lease_document_url: uploadedDocuments.map(doc => doc.url).join(','),
+                lease_document_name: uploadedDocuments.map(doc => doc.name).join(', ')
               };
-              console.log('Update payload:', updatePayload);
               
-              const updateResult = await apiService.properties.update(response.data.id, updatePayload);
-              
-              console.log('Lease document info updated successfully:', updateResult);
-              console.log('Update response data:', updateResult.data);
-              console.log('Update response status:', updateResult.status);
+              await apiService.properties.update(response.data.id, updatePayload);
+              console.log('Lease documents info updated successfully');
             } catch (updateError) {
-              console.error('Error updating property with lease URL:', updateError);
-              if (updateError.response) {
-                console.error('Error response:', updateError.response.data);
-                console.error('Error status:', updateError.response.status);
-              }
+              console.error('Error updating property with lease URLs:', updateError);
               
-              // Store lease document info in localStorage as a fallback
+              // Store lease documents info in localStorage as a fallback
               try {
-                const leaseDocumentInfo = {
-                  url: uploadResponse.data.fileUrl,
-                  name: uploadResponse.data.originalName || leaseDocument.name,
+                const leaseDocumentsInfo = {
+                  documents: uploadedDocuments,
                   uploadedAt: new Date().toISOString()
                 };
                 
-                localStorage.setItem(`property_${response.data.id}_lease_document`, JSON.stringify(leaseDocumentInfo));
-                console.log('Lease document info saved to localStorage as fallback');
+                localStorage.setItem(`property_${response.data.id}_lease_documents`, JSON.stringify(leaseDocumentsInfo));
+                console.log('Lease documents info saved to localStorage as fallback');
               } catch (storageError) {
-                console.error('Failed to save lease document info to localStorage:', storageError);
+                console.error('Failed to save lease documents info to localStorage:', storageError);
               }
-              
-              // Don't fail the whole process, just warn the user
-              console.warn('Lease document uploaded successfully. Database update failed but file is accessible.');
             }
           }
         } catch (uploadError) {
-          console.error('Error uploading lease document:', uploadError);
+          console.error('Error uploading lease documents:', uploadError);
           setUploadStatus('error');
           setUploadProgress(0);
-          // Still continue with property creation even if lease upload fails
-          alert('Property created but lease document upload failed. You can upload it later.');
+          alert('Property created but some lease documents failed to upload. You can upload them later.');
         }
       }
 
@@ -844,8 +841,9 @@ export default function AddUnit() {
         localStorage.setItem(addUnitKey, JSON.stringify(formData));
         console.log(`Saved addunit data to localStorage with key: ${addUnitKey}`);
 
-        // Remove temporary storage
-        localStorage.removeItem('temp_addunit_data');
+        // Mark property as incomplete in localStorage for cleanup tracking
+        localStorage.setItem(`property_${propertyId}_incomplete`, 'true');
+        console.log('Property marked as incomplete for cleanup tracking');
       } catch (storageError) {
         console.error('Error saving to localStorage:', storageError);
         // Continue even if localStorage fails
@@ -1174,7 +1172,7 @@ export default function AddUnit() {
           <div className="flex flex-row items-center px-[20px] pt-[60px] pb-[20px] relative">
             <button 
               className="flex items-center relative z-10 hover:opacity-75 transition-opacity duration-200"
-              onClick={() => router.back()}
+              onClick={() => router.push('/')}
               aria-label="Go back"
             >
               <ArrowLeftIcon />
@@ -1341,9 +1339,8 @@ export default function AddUnit() {
                   setUnitNumber(e.target.value);
                   setErrors(prev => ({ ...prev, unitNumber: '' }));
                 }}
-                placeholder="Unit number"
+                placeholder="Unit number (optional)"
                 className="flex-1 h-[19px] font-bold text-[14px] leading-[19px] text-[#515964] bg-transparent border-none outline-none placeholder-[#A0A0A0]"
-                required
               />
             </div>
               <InputError message={errors.unitNumber} />
@@ -1486,58 +1483,95 @@ export default function AddUnit() {
               <InputError message={errors.depositAmount} />
             </div>
           
-            {/* Upload Lease */}
-            <label className={`box-border flex flex-row justify-center items-center p-[16px_20px] gap-[8px] w-full h-[120px] bg-white border-2 border-dashed rounded-[16px] mb-12 cursor-pointer transition-all duration-200 ${
-            leaseDocument 
-              ? 'border-green-500 bg-green-50' 
-              : 'border-[#D1E7D5] hover:border-[#A8D5B8]'
-          }`}>
-            <div className="flex flex-col justify-center items-center p-0 gap-[12px] w-full">
-              {leaseDocument ? (
-                <>
-                  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="24" cy="24" r="24" fill="#10B981"/>
-                    <path d="M20 24L23 27L28 21" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  <div className="font-bold text-[14px] leading-[19px] text-center text-green-700 max-w-[280px] truncate">
-                    {leaseDocument.name}
-                  </div>
-                  <div className="text-[12px] text-green-600">
-                    {(leaseDocument.size / 1024 / 1024).toFixed(2)} MB
-                  </div>
-                  {uploadProgress > 0 && uploadProgress < 100 && (
-                    <div className="w-full max-w-[200px] h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-green-500 transition-all duration-300"
-                        style={{ width: `${uploadProgress}%` }}
-                      />
+            {/* Upload Lease - Multiple Files */}
+            <div className="w-full mb-12">
+              <label className={`box-border flex flex-row justify-center items-center p-[16px_20px] gap-[8px] w-full h-[120px] bg-white border-2 border-dashed rounded-[16px] cursor-pointer transition-all duration-200 ${
+              leaseDocuments.length > 0 
+                ? 'border-green-500 bg-green-50' 
+                : 'border-[#D1E7D5] hover:border-[#A8D5B8]'
+            }`}>
+              <div className="flex flex-col justify-center items-center p-0 gap-[12px] w-full">
+                {leaseDocuments.length > 0 ? (
+                  <>
+                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="24" cy="24" r="24" fill="#10B981"/>
+                      <path d="M20 24L23 27L28 21" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <div className="font-bold text-[14px] leading-[19px] text-center text-green-700">
+                      {leaseDocuments.length} file{leaseDocuments.length > 1 ? 's' : ''} selected
                     </div>
-                  )}
-                  {uploadStatus === 'success' && (
-                    <div className="text-[12px] text-green-600 font-semibold">
-                      Successfully uploaded
+                    <div className="text-[12px] text-green-600">
+                      Click to add more files
                     </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <DocumentUploadIcon />
-                  <div className="font-bold text-[14px] leading-[19px] text-center text-[#515964]">
-                    Upload your lease
-                  </div>
-                  <div className="text-[12px] text-[#515964] text-center">
-                    PDF, JPG, PNG (Max 5MB)
-                  </div>
-                </>
+                    {uploadProgress > 0 && uploadProgress < 100 && (
+                      <div className="w-full max-w-[200px] h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-green-500 transition-all duration-300"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    )}
+                    {uploadStatus === 'success' && (
+                      <div className="text-[12px] text-green-600 font-semibold">
+                        Successfully uploaded
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <DocumentUploadIcon />
+                    <div className="font-bold text-[14px] leading-[19px] text-center text-[#515964]">
+                      Upload lease documents
+                    </div>
+                    <div className="text-[12px] text-[#515964] text-center">
+                      PDF, JPG, PNG
+                    </div>
+                  </>
+                )}
+              </div>
+              <input 
+                type="file" 
+                onChange={handleFileChange}
+                className="hidden"
+                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+                multiple
+              />
+              </label>
+              
+              {/* Display selected files */}
+              {leaseDocuments.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {leaseDocuments.map((doc, index) => (
+                    <div key={index} className="flex items-center justify-between p-3 bg-white border border-[#D1E7D5] rounded-[12px]">
+                      <div className="flex-1 flex items-center gap-3">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M11.6667 1.66667H5C4.55797 1.66667 4.13405 1.84226 3.82149 2.15482C3.50893 2.46738 3.33334 2.89131 3.33334 3.33334V16.6667C3.33334 17.1087 3.50893 17.5326 3.82149 17.8452C4.13405 18.1577 4.55797 18.3333 5 18.3333H15C15.442 18.3333 15.866 18.1577 16.1785 17.8452C16.4911 17.5326 16.6667 17.1087 16.6667 16.6667V6.66667L11.6667 1.66667Z" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M11.6667 1.66667V6.66667H16.6667" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <div className="flex-1">
+                          <div className="font-semibold text-[12px] text-[#0B1420] truncate max-w-[200px]">
+                            {doc.name}
+                          </div>
+                          <div className="text-[10px] text-[#515964]">
+                            {(doc.size / 1024 / 1024).toFixed(2)} MB
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeDocument(index)}
+                        className="p-1.5 hover:bg-red-50 rounded-[8px] transition-colors"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 4L4 12" stroke="#D14848" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M4 4L12 12" stroke="#D14848" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
-            <input 
-              type="file" 
-              onChange={handleFileChange}
-              className="hidden"
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-            />
-            </label>
           </form>
         </div>
         

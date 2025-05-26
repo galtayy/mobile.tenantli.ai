@@ -180,10 +180,13 @@ exports.uploadPhoto = [
       // Görüntüyü işle ve sıkıştır
       console.log('Rapor fotoğrafı sıkıştırılıyor...');
       await sharp(req.file.buffer)
-        .resize(800, null, { // En fazla 800px genişlik, oranı koru
+        .resize(1200, null, { // En fazla 1200px genişlik, oranı koru
           withoutEnlargement: true
         })
-        .jpeg({ quality: 60 }) // %60 kalite ile daha agresif sıkıştır
+        .jpeg({ 
+          quality: 60, // %60 kalite - daha iyi sıkıştırma
+          progressive: true // Progressive JPEG for better loading
+        })
         .toFile(outputPath);
       
       console.log(`Görüntü sıkıştırıldı ve ${filename} olarak kaydedildi`);
@@ -459,7 +462,7 @@ exports.removePhotoTag = async (req, res) => {
 
 // Oda fotoğrafları yükleme controller
 exports.uploadRoomPhoto = [
-  // Upload middleware
+  // Upload middleware - bellek üzerinde tutar
   upload.single('photo'),
 
   // Controller
@@ -471,20 +474,12 @@ exports.uploadRoomPhoto = [
       // Mülk var mı kontrol et
       const property = await Property.findById(propertyId);
       if (!property) {
-        // Yüklenen dosyayı sil
-        if (req.file) {
-          fs.unlinkSync(req.file.path);
-        }
         return res.status(404).json({ message: 'Property not found' });
       }
 
       // Mülk sahibi mi kontrol et
       const isOwner = property.user_id === req.user.id;
       if (!isOwner) {
-        // Yüklenen dosyayı sil
-        if (req.file) {
-          fs.unlinkSync(req.file.path);
-        }
         return res.status(403).json({ message: 'You do not have permission to upload photos to this property' });
       }
 
@@ -503,12 +498,37 @@ exports.uploadRoomPhoto = [
         }
       }
 
+      // Benzersiz dosya adı oluştur
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      const filename = uniqueSuffix + '.jpg'; // Sıkıştırma için hep jpg formatında kaydet
+      const outputPath = path.join(__dirname, '../uploads', filename);
+      
+      // Uploads dizini yoksa oluştur
+      const uploadsDir = path.join(__dirname, '../uploads');
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      
+      // Görüntüyü işle ve sıkıştır
+      console.log('Oda fotoğrafı sıkıştırılıyor...');
+      await sharp(req.file.buffer)
+        .resize(1200, null, { // En fazla 1200px genişlik, oranı koru
+          withoutEnlargement: true
+        })
+        .jpeg({ 
+          quality: 60, // %60 kalite - daha iyi sıkıştırma
+          progressive: true // Progressive JPEG for better loading
+        })
+        .toFile(outputPath);
+      
+      console.log(`Görüntü sıkıştırıldı ve ${filename} olarak kaydedildi`);
+
       // Fotoğraf bilgilerini veritabanına kaydet
       const photoId = await Photo.create({
         report_id: null, // odalar için report_id null
         room_id: roomId,
         property_id: propertyId,
-        file_path: req.file.filename,
+        file_path: filename,
         note: req.body.note || null,
         timestamp: new Date(),
         tags
@@ -526,12 +546,6 @@ exports.uploadRoomPhoto = [
       });
     } catch (error) {
       console.error('Upload room photo error:', error);
-
-      // Yüklenen dosyayı sil
-      if (req.file) {
-        fs.unlinkSync(req.file.path);
-      }
-
       res.status(500).json({ message: 'Server error' });
     }
   }

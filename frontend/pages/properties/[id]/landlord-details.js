@@ -65,6 +65,40 @@ export default function LandlordDetails() {
     }
   }, [user, authLoading, router]);
   
+  // Load saved landlord details if they exist
+  useEffect(() => {
+    const propertyID = id || propertyId;
+    if (propertyID) {
+      // Try to load from localStorage
+      const savedLandlordData = localStorage.getItem(`property_${propertyID}_landlord`);
+      if (savedLandlordData) {
+        try {
+          const landlordData = JSON.parse(savedLandlordData);
+          console.log('Loading saved landlord data:', landlordData);
+          setEmail(landlordData.email || '');
+          setPhone(landlordData.phone || '');
+        } catch (error) {
+          console.error('Error loading saved landlord data:', error);
+        }
+      }
+      
+      // Also try to load from database
+      apiService.properties.getById(propertyID).then(response => {
+        if (response.data) {
+          console.log('Property data from API:', response.data);
+          if (response.data.landlord_email) {
+            setEmail(response.data.landlord_email);
+          }
+          if (response.data.landlord_phone) {
+            setPhone(response.data.landlord_phone);
+          }
+        }
+      }).catch(error => {
+        console.error('Error loading property data:', error);
+      });
+    }
+  }, [id, propertyId]);
+  
   // Handle form submission
   const handleSubmit = async () => {
     // Simple email validation
@@ -98,6 +132,10 @@ export default function LandlordDetails() {
         ...landlordDetails,
         savedAt: new Date().toISOString()
       }));
+
+      // Mark property as completed (no longer incomplete)
+      localStorage.removeItem(`property_${propertyID}_incomplete`);
+      console.log('Property setup completed, marked as complete');
 
       // Navigate to user details page
       router.push({
@@ -177,7 +215,14 @@ export default function LandlordDetails() {
         <div className="flex flex-row justify-center items-center py-[20px] px-[10px] gap-[10px] w-full h-[65px] safe-area-inset-left safe-area-inset-right">
           <button
             className="absolute left-[20px] top-[50%] transform -translate-y-1/2 p-2"
-            onClick={() => router.back()}
+            onClick={() => {
+              const propertyID = id || propertyId;
+              if (propertyID) {
+                router.push(`/properties/${propertyID}/add-rooms`);
+              } else {
+                router.push('/');
+              }
+            }}
             aria-label="Go back"
           >
             <ArrowLeftIcon />

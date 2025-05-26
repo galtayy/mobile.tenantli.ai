@@ -260,9 +260,9 @@ export default function LeaseDetails() {
   const [leaseDuration, setLeaseDuration] = useState('');
   const [leaseDurationType, setLeaseDurationType] = useState('months');
   const [loading, setLoading] = useState(true);
-  const [leaseDocumentUrl, setLeaseDocumentUrl] = useState(null);
-  const [leaseDocumentName, setLeaseDocumentName] = useState('');
+  const [leaseDocuments, setLeaseDocuments] = useState([]);
   const [showPDFViewer, setShowPDFViewer] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState(null);
   const { id } = router.query;
   
   // Set up duration type options
@@ -319,35 +319,66 @@ export default function LeaseDetails() {
       setLeaseDuration(property.lease_duration ? property.lease_duration.toString() : '');
       setLeaseDurationType(property.lease_duration_type || 'months');
       
-      // Check if there's a lease document URL stored in the database
+      // Check if there are lease documents stored
+      const documents = [];
+      
+      // Handle multiple documents (comma-separated URLs)
       if (property.lease_document_url) {
-        // If it's already a full URL, use it directly; otherwise prepend the base URL
-        const fullUrl = property.lease_document_url.startsWith('http') 
-          ? property.lease_document_url 
-          : apiService.getBaseUrl() + property.lease_document_url;
-        setLeaseDocumentUrl(fullUrl);
-        setLeaseDocumentName(property.lease_document_name || 'Lease Document.pdf');
-      } else {
-        // Check localStorage as a fallback
+        const urls = property.lease_document_url.split(',');
+        const names = property.lease_document_name ? property.lease_document_name.split(', ') : [];
+        
+        urls.forEach((url, index) => {
+          const fullUrl = url.trim().startsWith('http') 
+            ? url.trim() 
+            : apiService.getBaseUrl() + url.trim();
+          documents.push({
+            url: fullUrl,
+            name: names[index] || `Lease Document ${index + 1}`
+          });
+        });
+      }
+      
+      // Check localStorage for multiple documents
+      if (documents.length === 0) {
         try {
-          const localStorageKey = `property_${id}_lease_document`;
+          // Try new format first
+          const localStorageKey = `property_${id}_lease_documents`;
           const storedLeaseInfo = localStorage.getItem(localStorageKey);
           
           if (storedLeaseInfo) {
             const leaseInfo = JSON.parse(storedLeaseInfo);
-            console.log('Found lease document info in localStorage:', leaseInfo);
-            
-            // If it's already a full URL, use it directly; otherwise prepend the base URL
-            const fullUrl = leaseInfo.url.startsWith('http') 
-              ? leaseInfo.url 
-              : apiService.getBaseUrl() + leaseInfo.url;
-            setLeaseDocumentUrl(fullUrl);
-            setLeaseDocumentName(leaseInfo.name || 'Lease Document.pdf');
+            if (leaseInfo.documents && Array.isArray(leaseInfo.documents)) {
+              leaseInfo.documents.forEach(doc => {
+                const fullUrl = doc.url.startsWith('http') 
+                  ? doc.url 
+                  : apiService.getBaseUrl() + doc.url;
+                documents.push({
+                  url: fullUrl,
+                  name: doc.name || 'Lease Document'
+                });
+              });
+            }
+          } else {
+            // Try legacy single document format
+            const legacyKey = `property_${id}_lease_document`;
+            const legacyInfo = localStorage.getItem(legacyKey);
+            if (legacyInfo) {
+              const doc = JSON.parse(legacyInfo);
+              const fullUrl = doc.url.startsWith('http') 
+                ? doc.url 
+                : apiService.getBaseUrl() + doc.url;
+              documents.push({
+                url: fullUrl,
+                name: doc.name || 'Lease Document'
+              });
+            }
           }
         } catch (storageError) {
-          console.error('Error reading lease document from localStorage:', storageError);
+          console.error('Error reading lease documents from localStorage:', storageError);
         }
       }
+      
+      setLeaseDocuments(documents);
       
       setLoading(false);
     } catch (error) {
@@ -387,10 +418,9 @@ export default function LeaseDetails() {
   }, [contractStartDate, leaseDuration, leaseDurationType]);
 
   // Handle document view
-  const handleViewDocument = () => {
-    if (leaseDocumentUrl) {
-      setShowPDFViewer(true);
-    }
+  const handleViewDocument = (document) => {
+    setSelectedDocument(document);
+    setShowPDFViewer(true);
   };
 
   if (loading) {
@@ -613,41 +643,55 @@ export default function LeaseDetails() {
                   </div>
                 </div>
                 
-                {/* Upload Lease Document Button / View Document */}
-                {leaseDocumentUrl ? (
-                  <button
-                    onClick={handleViewDocument}
-                    className="form-input flex flex-row justify-center items-center p-[16px_20px] gap-[8px] w-full bg-gray-50 border border-[#D1E7D5] rounded-[16px] hover:bg-gray-100 transition-colors cursor-pointer"
-                  >
-                    <div className="flex flex-col justify-center items-center gap-[8px]">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M14 2V8H20" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M16 13H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M16 17H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M10 9H9H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <span className="font-bold text-[14px] leading-[19px] text-center text-[#515964]">
-                        {leaseDocumentName}
-                      </span>
-                    </div>
-                  </button>
-                ) : (
-                  <div className="form-input flex flex-row justify-center items-center p-[16px_20px] gap-[8px] w-full bg-gray-50 border border-dashed border-[#D1E7D5] rounded-[16px]">
-                    <div className="flex flex-col justify-center items-center gap-[8px]">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M14 2V8H20" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M16 13H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M16 17H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M10 9H9H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <span className="font-bold text-[14px] leading-[19px] text-center text-[#515964]">
-                        No lease document uploaded
-                      </span>
-                    </div>
+                {/* Lease Documents Section */}
+                <div className="w-full">
+                  <div className="font-bold text-[14px] leading-[19px] text-[#0B1420] mb-2">
+                    Lease Documents
                   </div>
-                )}
+                  
+                  {leaseDocuments.length > 0 ? (
+                    <div className="space-y-2">
+                      {leaseDocuments.map((doc, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleViewDocument(doc)}
+                          className="w-full form-input flex flex-row items-center justify-between p-[16px_20px] gap-[8px] bg-gray-50 border border-[#D1E7D5] rounded-[16px] hover:bg-gray-100 transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-center gap-[12px]">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M14 2V8H20" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M16 13H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M16 17H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M10 9H9H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            <span className="font-bold text-[14px] leading-[19px] text-[#515964] text-left">
+                              {doc.name}
+                            </span>
+                          </div>
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M7.5 5L12.5 10L7.5 15" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="form-input flex flex-row justify-center items-center p-[16px_20px] gap-[8px] w-full bg-gray-50 border border-dashed border-[#D1E7D5] rounded-[16px]">
+                      <div className="flex flex-col justify-center items-center gap-[8px]">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M14 2V8H20" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M16 13H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M16 17H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M10 9H9H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <span className="font-bold text-[14px] leading-[19px] text-center text-[#515964]">
+                          No lease documents uploaded
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               </div>
           </div>
@@ -655,14 +699,19 @@ export default function LeaseDetails() {
       </div>
       
       {/* Document Viewer Modal */}
-      <DocumentViewerModal
-        show={showPDFViewer}
-        onClose={() => setShowPDFViewer(false)}
-        url={leaseDocumentUrl}
-        title={leaseDocumentName}
-        type={leaseDocumentUrl?.toLowerCase().endsWith('.pdf') ? 'pdf' : 
-              (leaseDocumentUrl?.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/) ? 'image' : 'unknown')}
-      />
+      {selectedDocument && (
+        <DocumentViewerModal
+          show={showPDFViewer}
+          onClose={() => {
+            setShowPDFViewer(false);
+            setSelectedDocument(null);
+          }}
+          url={selectedDocument.url}
+          title={selectedDocument.name}
+          type={selectedDocument.url?.toLowerCase().endsWith('.pdf') ? 'pdf' : 
+                (selectedDocument.url?.toLowerCase().match(/\.(jpg|jpeg|png|gif)$/) ? 'image' : 'unknown')}
+        />
+      )}
     </>
   );
 }
