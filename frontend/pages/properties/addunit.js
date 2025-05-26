@@ -143,12 +143,8 @@ export default function AddUnit() {
   
   // Check if all required fields are filled
   const isFormValid = () => {
-    const finalAddress = addressInputRef.current?.value || address;
-    return propertyName && 
-           finalAddress && 
-           depositAmount && 
-           contractStartDate && 
-           leaseDuration;
+    // Always return true to keep button enabled
+    return true;
   };
   
   // Handle Enter key for navigation
@@ -931,6 +927,11 @@ export default function AddUnit() {
       
       if (!leaseDuration) {
         newErrors.leaseDuration = 'Please enter lease duration';
+        hasErrors = true;
+      }
+      
+      if (!moveInDate) {
+        newErrors.moveInDate = 'Please enter move-in date';
         hasErrors = true;
       }
       
@@ -1936,7 +1937,7 @@ export default function AddUnit() {
         <div className="fixed left-0 right-0 bottom-0 w-full max-w-[500px] mx-auto bg-gradient-to-t from-[#FBF5DA] via-[#FBF5DA] to-transparent pt-8 pb-4 px-5 safe-area-bottom z-20">
           <button
           onClick={handleSubmit}
-          disabled={isSubmitting || !isFormValid()}
+          disabled={isSubmitting}
           className="w-full h-[56px] flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md hover:bg-[#263449] transition-colors duration-200 disabled:opacity-50 disabled:hover:bg-[#1C2C40] disabled:cursor-not-allowed"
         >
           <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
