@@ -118,11 +118,16 @@ export default function Register() {
     }
   }, [password, errors.password]);
 
+  // Validate confirm password in real-time
   useEffect(() => {
-    if (errors.confirmPassword && confirmPassword) {
-      setErrors(prev => ({ ...prev, confirmPassword: '' }));
+    if (confirmPassword) {
+      if (password && password !== confirmPassword) {
+        setErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }));
+      } else if (password === confirmPassword) {
+        setErrors(prev => ({ ...prev, confirmPassword: '' }));
+      }
     }
-  }, [confirmPassword, errors.confirmPassword]);
+  }, [password, confirmPassword]);
 
   // Theme setting for light mode
   useEffect(() => {
@@ -375,7 +380,13 @@ export default function Register() {
                   autoComplete="new-password"
                   required
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    // Clear error if it exists when user starts typing
+                    if (errors.confirmPassword) {
+                      setErrors(prev => ({ ...prev, confirmPassword: '' }));
+                    }
+                  }}
                   onFocus={() => setFocusedField('confirmPassword')}
                   onBlur={() => setFocusedField(null)}
                   placeholder="Confirm your password"

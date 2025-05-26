@@ -129,7 +129,8 @@ export default function AddUnit() {
     unitNumber: '',
     depositAmount: '',
     contractStartDate: '',
-    leaseDuration: ''
+    leaseDuration: '',
+    moveInDate: ''
   });
   
   // Google Maps Autocomplete refs
@@ -897,7 +898,8 @@ export default function AddUnit() {
         unitNumber: '',
         depositAmount: '',
         contractStartDate: '',
-        leaseDuration: ''
+        leaseDuration: '',
+        moveInDate: ''
       });
 
       // Validate required fields
@@ -930,6 +932,17 @@ export default function AddUnit() {
       if (!leaseDuration) {
         newErrors.leaseDuration = 'Please enter lease duration';
         hasErrors = true;
+      }
+      
+      // Date validation: Move-in date cannot be before lease start date
+      if (contractStartDate && moveInDate) {
+        const leaseStart = new Date(contractStartDate);
+        const moveIn = new Date(moveInDate);
+        
+        if (moveIn < leaseStart) {
+          newErrors.moveInDate = 'Move-in date cannot be before lease start date';
+          hasErrors = true;
+        }
       }
       
       if (hasErrors) {
@@ -1770,6 +1783,14 @@ export default function AddUnit() {
                   onChange={(e) => {
                     setContractStartDate(e.target.value);
                     setErrors(prev => ({ ...prev, contractStartDate: '' }));
+                    // Also check if move-in date is valid now
+                    if (moveInDate && e.target.value) {
+                      const leaseStart = new Date(e.target.value);
+                      const moveIn = new Date(moveInDate);
+                      if (moveIn >= leaseStart) {
+                        setErrors(prev => ({ ...prev, moveInDate: '' }));
+                      }
+                    }
                   }}
                   className="w-full h-[19px] opacity-0 z-10 cursor-pointer"
                 />
@@ -1779,22 +1800,30 @@ export default function AddUnit() {
             </div>
           
             {/* Move In Date */}
-            <div onClick={() => document.getElementById('move-in-date').showPicker()} className="box-border flex flex-row items-center p-[18px_20px] gap-[8px] w-full h-[56px] bg-white border border-[#D1E7D5] rounded-[16px] mb-4 relative cursor-pointer hover:border-[#A8D5B8] transition-all duration-200">
-              <div className="flex-shrink-0 min-w-[20px]">
-              <CalendarIcon />
-            </div>
-            <div className="relative flex-1">
-              <div className="absolute left-0 text-[#A0A0A0] text-[14px] leading-[19px] font-bold">
-                {!moveInDate ? "Move in date" : moveInDate}
+            <div className="relative mb-4">
+              <div onClick={() => document.getElementById('move-in-date').showPicker()} className={`box-border flex flex-row items-center p-[18px_20px] gap-[8px] w-full h-[56px] ${
+                errors.moveInDate ? 'bg-red-50 border-red-300' : 'bg-white border-[#D1E7D5]'
+              } border rounded-[16px] relative cursor-pointer hover:border-[#A8D5B8] transition-all duration-200`}>
+                <div className="flex-shrink-0 min-w-[20px]">
+                  <CalendarIcon />
+                </div>
+                <div className="relative flex-1">
+                  <div className="absolute left-0 text-[#A0A0A0] text-[14px] leading-[19px] font-bold">
+                    {!moveInDate ? "Move in date" : moveInDate}
+                  </div>
+                  <input
+                    type="date"
+                    id="move-in-date"
+                    value={moveInDate}
+                    onChange={(e) => {
+                      setMoveInDate(e.target.value);
+                      setErrors(prev => ({ ...prev, moveInDate: '' }));
+                    }}
+                    className="w-full h-[19px] opacity-0 z-10 cursor-pointer"
+                  />
+                </div>
               </div>
-              <input
-                type="date"
-                id="move-in-date"
-                value={moveInDate}
-                onChange={(e) => setMoveInDate(e.target.value)}
-                className="w-full h-[19px] opacity-0 z-10 cursor-pointer"
-              />
-            </div>
+              <InputError message={errors.moveInDate} />
             </div>
           
             {/* Deposit Amount */}
