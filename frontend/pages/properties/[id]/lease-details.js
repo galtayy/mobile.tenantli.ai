@@ -657,19 +657,19 @@ export default function LeaseDetails() {
                           onClick={() => handleViewDocument(doc)}
                           className="w-full form-input flex flex-row items-center justify-between p-[16px_20px] gap-[8px] bg-gray-50 border border-[#D1E7D5] rounded-[16px] hover:bg-gray-100 transition-colors cursor-pointer"
                         >
-                          <div className="flex items-center gap-[12px]">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <div className="flex items-center gap-[12px] flex-1 min-w-0">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
                               <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                               <path d="M14 2V8H20" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                               <path d="M16 13H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                               <path d="M16 17H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                               <path d="M10 9H9H8" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
-                            <span className="font-bold text-[14px] leading-[19px] text-[#515964] text-left">
+                            <span className="font-bold text-[14px] leading-[19px] text-[#515964] text-left truncate flex-1" title={doc.name}>
                               {doc.name}
                             </span>
                           </div>
-                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
                             <path d="M7.5 5L12.5 10L7.5 15" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         </button>
