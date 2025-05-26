@@ -755,10 +755,25 @@ export default function MoveOutRoom() {
             formData.append('move_out', 'true');
             
             // Upload photo
-            await apiService.photos.uploadForRoom(propertyId, roomId, formData);
-            console.log(`Photo ${i+1} uploaded successfully`);
+            console.log(`[DEBUG] Uploading move-out photo to API: ${apiService.getBaseUrl()}/api/photos/upload-room/${propertyId}/${roomId}`);
+            const uploadResponse = await apiService.photos.uploadForRoom(propertyId, roomId, formData);
+            console.log(`Photo ${i+1} uploaded successfully, response:`, uploadResponse.data);
           } catch (uploadError) {
             console.error(`Failed to upload photo ${i+1}:`, uploadError);
+            console.error(`[ERROR] Move-out upload error details:`, {
+              message: uploadError.message,
+              status: uploadError.response?.status,
+              data: uploadError.response?.data,
+              config: {
+                url: uploadError.config?.url,
+                method: uploadError.config?.method,
+                baseURL: uploadError.config?.baseURL
+              }
+            });
+            // Show error to user
+            if (typeof window !== 'undefined' && window.alert) {
+              window.alert(`Failed to upload photo ${i+1}. Please check your connection and try again.`);
+            }
           }
         }
       }

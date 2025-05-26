@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { toast } from 'react-toastify';
 import { useAuth } from '../../../lib/auth';
 import { apiService } from '../../../lib/api';
 
@@ -474,10 +475,23 @@ export default function UploadPhotos() {
             formData.append('room_id', roomId);
             
             // Upload photo
-            await apiService.photos.uploadForRoom(id, roomId, formData);
-            console.log(`[DEBUG] Photo ${i+1} uploaded successfully`);
+            console.log(`[DEBUG] Uploading to API: ${apiService.getBaseUrl()}/api/photos/upload-room/${id}/${roomId}`);
+            const uploadResponse = await apiService.photos.uploadForRoom(id, roomId, formData);
+            console.log(`[DEBUG] Photo ${i+1} uploaded successfully, response:`, uploadResponse.data);
           } catch (uploadError) {
             console.error(`[ERROR] Failed to upload photo ${i+1}:`, uploadError);
+            console.error(`[ERROR] Upload error details:`, {
+              message: uploadError.message,
+              status: uploadError.response?.status,
+              data: uploadError.response?.data,
+              config: {
+                url: uploadError.config?.url,
+                method: uploadError.config?.method,
+                baseURL: uploadError.config?.baseURL
+              }
+            });
+            // Show error to user
+            toast.error(`Failed to upload photo ${i+1}. Please try again.`);
           }
         }
       }

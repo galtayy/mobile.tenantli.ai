@@ -873,7 +873,7 @@ export default function AddRooms() {
                 }
                 photosByRoom[photo.room_id].photos.push({
                   ...photo,
-                  url: photo.url || `/uploads/${photo.file_path}`
+                  url: apiService.getPhotoUrl(photo)
                 });
               }
             });
