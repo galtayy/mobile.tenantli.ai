@@ -138,6 +138,7 @@ export default function AddUnit() {
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadStatus, setUploadStatus] = useState('');
+  const [showPhotoOptions, setShowPhotoOptions] = useState(false);
   
   // Check if all required fields are filled
   const isFormValid = () => {
@@ -701,11 +702,7 @@ export default function AddUnit() {
         }
       }
       
-      // Check file size (5MB limit after compression)
-      if (processedFile.size > 5 * 1024 * 1024) {
-        alert(`${file.name} is larger than 5MB even after compression and will be skipped`);
-        continue;
-      }
+      // No size limit check since we're compressing
       
       // Check file type
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
@@ -726,6 +723,164 @@ export default function AddUnit() {
   // Remove a selected file
   const removeDocument = (index) => {
     setLeaseDocuments(prevDocs => prevDocs.filter((_, i) => i !== index));
+  };
+
+  // Handle take photo
+  const handleTakePhoto = () => {
+    try {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*';
+      fileInput.capture = 'environment';
+      
+      fileInput.onchange = async (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          try {
+            console.log(`[DEBUG] Photo taken: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+            
+            let processedFile = file;
+            const isHEIC = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic');
+            
+            if (file.size > 2 * 1024 * 1024 || isHEIC) {
+              console.log('[DEBUG] Compressing photo...');
+              processedFile = await compressImage(file);
+              console.log(`[DEBUG] Compressed size: ${(processedFile.size / 1024 / 1024).toFixed(2)}MB`);
+            }
+            
+            setLeaseDocuments(prevDocs => [...prevDocs, processedFile]);
+          } catch (error) {
+            console.error('[ERROR] Failed to process photo:', error);
+            alert('Failed to process photo. Please try again.');
+          }
+        }
+      };
+      
+      fileInput.click();
+    } catch (error) {
+      console.error('[ERROR] Error accessing camera:', error);
+    }
+    
+    setShowPhotoOptions(false);
+  };
+
+  // Handle choose from gallery
+  const handleChooseFromGallery = () => {
+    try {
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = 'image/*,application/pdf';
+      fileInput.multiple = true;
+      
+      fileInput.onchange = async (event) => {
+        await handleFileChange(event);
+      };
+      
+      fileInput.click();
+    } catch (error) {
+      console.error('[ERROR] Error accessing gallery:', error);
+    }
+    
+    setShowPhotoOptions(false);
+  };
+
+  // Photo Options Modal Component
+  const PhotoOptionsModal = ({ show, onClose, onTakePhoto, onChooseFromGallery }) => {
+    const [animationClass, setAnimationClass] = useState('');
+    
+    useEffect(() => {
+      if (show) {
+        // Small delay to trigger animation
+        setTimeout(() => {
+          setAnimationClass('animate-in');
+        }, 10);
+      }
+    }, [show]);
+    
+    const handlePhotoOption = (callback) => {
+      handleClose();
+      setTimeout(() => {
+        callback();
+      }, 350);
+    };
+    
+    const handleClose = () => {
+      setAnimationClass('');
+      // Wait for animation to finish before closing
+      setTimeout(() => {
+        onClose();
+      }, 300);
+    };
+    
+    if (!show && !animationClass) {
+      return null;
+    }
+    
+    return (
+      <div className="fixed inset-0 z-50">
+        {/* Overlay with fade animation */}
+        <div 
+          className={`absolute inset-0 bg-black bg-opacity-50 bottom-sheet-overlay ${animationClass}`}
+          onClick={handleClose}
+        ></div>
+        
+        {/* Bottom Sheet */}
+        <div className={`absolute bottom-0 left-0 right-0 w-full h-[217px] bg-white rounded-t-[24px] overflow-hidden bottom-sheet ${animationClass} safe-area-bottom`}>
+          {/* Handle Bar */}
+          <div className="flex justify-center items-center pt-[10px] pb-0">
+            <div className="w-[95px] h-[6px] bg-[#ECECEC] rounded-[24px]"></div>
+          </div>
+          
+          {/* Title */}
+          <div className="flex justify-center items-center h-[55px]">
+            <h3 className="font-bold text-[18px] leading-[25px] text-[#0B1420]">
+              Add a Document
+            </h3>
+          </div>
+          
+          {/* Photo Options */}
+          <div className="w-full max-w-[350px] mx-auto">
+            {/* Take a Photo Option */}
+            <div 
+              className="flex flex-row items-center h-[56px] border-b border-[#ECF0F5] px-5 py-[16px] hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+              onClick={() => {
+                handlePhotoOption(onTakePhoto);
+              }}
+            >
+              <div className="flex flex-row items-center gap-[12px]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6.76 22H17.24C20 22 21.1 20.31 21.23 18.25L21.75 9.99C21.89 7.83 20.17 6 18 6C17.39 6 16.83 5.65 16.55 5.11L15.83 3.66C15.37 2.75 14.17 2 13.15 2H10.86C9.83 2 8.63 2.75 8.17 3.66L7.45 5.11C7.17 5.65 6.61 6 6 6C3.83 6 2.11 7.83 2.25 9.99L2.77 18.25C2.89 20.31 4 22 6.76 22Z" stroke="#292D32" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M10.5 8H13.5" stroke="#292D32" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M12 18C13.79 18 15.25 16.54 15.25 14.75C15.25 12.96 13.79 11.5 12 11.5C10.21 11.5 8.75 12.96 8.75 14.75C8.75 16.54 10.21 18 12 18Z" stroke="#292D32" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div className="font-bold text-[14px] leading-[19px] text-[#0B1420]">
+                  Take a Photo
+                </div>
+              </div>
+            </div>
+            
+            {/* Choose From Gallery Option */}
+            <div 
+              className="flex flex-row items-center h-[56px] px-5 py-[16px] hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+              onClick={() => {
+                handlePhotoOption(onChooseFromGallery);
+              }}
+            >
+              <div className="flex flex-row items-center gap-[12px]">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" stroke="#292D32" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9 10C10.1046 10 11 9.10457 11 8C11 6.89543 10.1046 6 9 6C7.89543 6 7 6.89543 7 8C7 9.10457 7.89543 10 9 10Z" stroke="#292D32" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M2.67 18.95L7.6 15.64C8.39 15.11 9.53 15.17 10.24 15.78L10.57 16.07C11.35 16.74 12.61 16.74 13.39 16.07L17.55 12.5C18.33 11.83 19.59 11.83 20.37 12.5L22 13.9" stroke="#292D32" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <div className="font-bold text-[14px] leading-[19px] text-[#0B1420]">
+                  Choose From Gallery
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const handleSubmit = async (e) => {
@@ -1332,7 +1487,8 @@ export default function AddUnit() {
             transition: opacity 0.3s ease-in-out;
           }
           
-          .bottom-sheet-overlay.visible {
+          .bottom-sheet-overlay.visible,
+          .bottom-sheet-overlay.animate-in {
             opacity: 1;
           }
           
@@ -1341,7 +1497,8 @@ export default function AddUnit() {
             transition: transform 0.3s ease-in-out;
           }
           
-          .bottom-sheet.visible {
+          .bottom-sheet.visible,
+          .bottom-sheet.animate-in {
             transform: translateY(0);
           }
         `}</style>
@@ -1666,12 +1823,14 @@ export default function AddUnit() {
           
             {/* Upload Lease - Multiple Files */}
             <div className="w-full mb-12">
-              <label className={`box-border flex flex-row justify-center items-center p-[16px_20px] gap-[8px] w-full h-[120px] bg-white border-2 border-dashed rounded-[16px] cursor-pointer transition-all duration-200 overflow-hidden ${
-              leaseDocuments.length > 0 
-                ? 'border-green-500 bg-green-50' 
-                : 'border-[#D1E7D5] hover:border-[#A8D5B8]'
-            }`}>
-              <div className="flex flex-col justify-center items-center p-0 gap-[12px] w-full max-w-full px-4">
+              <div 
+                onClick={() => setShowPhotoOptions(true)}
+                className={`box-border flex flex-row justify-center items-center p-[16px_20px] gap-[8px] w-full h-[120px] bg-white border-2 border-dashed rounded-[16px] cursor-pointer transition-all duration-200 overflow-hidden relative ${
+                leaseDocuments.length > 0 
+                  ? 'border-green-500 bg-green-50' 
+                  : 'border-[#D1E7D5] hover:border-[#A8D5B8]'
+              }`}>
+              <div className="flex flex-col justify-center items-center gap-[8px] w-full">
                 {leaseDocuments.length > 0 ? (
                   <>
                     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1684,14 +1843,6 @@ export default function AddUnit() {
                     <div className="text-[12px] text-green-600">
                       Click to add more files
                     </div>
-                    {uploadProgress > 0 && uploadProgress < 100 && (
-                      <div className="w-full max-w-[180px] h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
-                        <div 
-                          className="h-full bg-green-500 transition-all duration-300 rounded-full"
-                          style={{ width: `${uploadProgress}%` }}
-                        />
-                      </div>
-                    )}
                   </>
                 ) : (
                   <>
@@ -1705,14 +1856,15 @@ export default function AddUnit() {
                   </>
                 )}
               </div>
-              <input 
-                type="file" 
-                onChange={handleFileChange}
-                className="hidden"
-                accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                multiple
-              />
-              </label>
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
+                  <div 
+                    className="h-full bg-green-500 transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
+            </div>
               
               {/* Display selected files */}
               {leaseDocuments.length > 0 && (
@@ -1853,6 +2005,15 @@ export default function AddUnit() {
           </div>
         </div>
       )}
+      
+      {/* Photo Options Modal */}
+      <PhotoOptionsModal
+        show={showPhotoOptions}
+        onClose={() => setShowPhotoOptions(false)}
+        onTakePhoto={handleTakePhoto}
+        onChooseFromGallery={handleChooseFromGallery}
+      />
+      
     </div>
   );
 }
