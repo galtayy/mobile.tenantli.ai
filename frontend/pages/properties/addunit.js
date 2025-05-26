@@ -573,26 +573,148 @@ export default function AddUnit() {
     return end.toISOString().split('T')[0];
   };
 
+  // Compress image function
+  const compressImage = async (file, maxWidth = 1920, maxHeight = 1920, quality = 0.7) => {
+    return new Promise((resolve, reject) => {
+      try {
+        // Check if file is an image
+        if (!file.type.startsWith('image/')) {
+          console.log('[DEBUG] Not an image file, returning original');
+          resolve(file);
+          return;
+        }
+
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+          const img = new Image();
+          
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              let width = img.width;
+              let height = img.height;
+
+              // Calculate new dimensions
+              if (width > height) {
+                if (width > maxWidth) {
+                  height = Math.round((height * maxWidth) / width);
+                  width = maxWidth;
+                }
+              } else {
+                if (height > maxHeight) {
+                  width = Math.round((width * maxHeight) / height);
+                  height = maxHeight;
+                }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+
+              // Try different quality levels if needed
+              let currentQuality = quality;
+              const tryCompress = () => {
+                canvas.toBlob(
+                  (blob) => {
+                    if (blob) {
+                      // Check if compressed size is reasonable
+                      if (blob.size > 3 * 1024 * 1024 && currentQuality > 0.3) {
+                        // Still too large, try lower quality
+                        currentQuality -= 0.1;
+                        console.log(`[DEBUG] Image still large (${(blob.size / 1024 / 1024).toFixed(2)}MB), trying quality ${currentQuality}`);
+                        tryCompress();
+                      } else {
+                        // Create a new File object with the compressed blob
+                        const compressedFile = new File([blob], file.name, {
+                          type: 'image/jpeg',
+                          lastModified: Date.now()
+                        });
+                        console.log(`[DEBUG] Image compressed: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+                        resolve(compressedFile);
+                      }
+                    } else {
+                      console.error('[ERROR] Canvas toBlob failed');
+                      resolve(file); // Return original file if compression fails
+                    }
+                  },
+                  'image/jpeg',
+                  currentQuality
+                );
+              };
+              
+              tryCompress();
+            } catch (error) {
+              console.error('[ERROR] Canvas processing failed:', error);
+              resolve(file); // Return original file if processing fails
+            }
+          };
+          
+          img.onerror = () => {
+            console.error('[ERROR] Image load failed');
+            resolve(file); // Return original file if image load fails
+          };
+          
+          img.src = event.target.result;
+        };
+        
+        reader.onerror = () => {
+          console.error('[ERROR] File read failed');
+          resolve(file); // Return original file if read fails
+        };
+        
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('[ERROR] Compression setup failed:', error);
+        resolve(file); // Return original file if any error occurs
+      }
+    });
+  };
+
   // Handle file selection - support multiple files
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     const validFiles = [];
     
     for (const file of files) {
-      // Check file size (5MB limit per file)
-      if (file.size > 5 * 1024 * 1024) {
-        alert(`${file.name} is larger than 5MB and will be skipped`);
+      console.log(`[DEBUG] Processing file: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)}MB, type: ${file.type}`);
+      
+      let processedFile = file;
+      
+      // Check if it's an image that needs compression
+      if (file.type.startsWith('image/')) {
+        // Check for HEIC format
+        const isHEIC = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic');
+        
+        // Compress images larger than 2MB or HEIC format
+        if (file.size > 2 * 1024 * 1024 || isHEIC) {
+          console.log('[DEBUG] Compressing/converting image...');
+          try {
+            processedFile = await compressImage(file);
+            console.log(`[DEBUG] Processed file size: ${(processedFile.size / 1024 / 1024).toFixed(2)}MB`);
+          } catch (error) {
+            console.error('[ERROR] Failed to compress image:', error);
+            // Continue with original file
+          }
+        }
+      }
+      
+      // Check file size (5MB limit after compression)
+      if (processedFile.size > 5 * 1024 * 1024) {
+        alert(`${file.name} is larger than 5MB even after compression and will be skipped`);
         continue;
       }
       
       // Check file type
       const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
-      if (!allowedTypes.includes(file.type)) {
+      if (!allowedTypes.includes(processedFile.type) && !processedFile.type.startsWith('image/')) {
         alert(`${file.name} is not a supported file type (PDF, JPG, PNG) and will be skipped`);
         continue;
       }
       
-      validFiles.push(file);
+      validFiles.push(processedFile);
     }
     
     if (validFiles.length > 0) {
@@ -758,42 +880,101 @@ export default function AddUnit() {
           const token = localStorage.getItem('token');
           const axios = (await import('axios')).default;
           
-          // Upload each document
+          // Upload each document with retry mechanism
+          let uploadedCount = 0;
+          let failedUploads = [];
+          
           for (let i = 0; i < leaseDocuments.length; i++) {
             const document = leaseDocuments[i];
-            const fileFormData = new FormData();
-            fileFormData.append('file', document);
-            fileFormData.append('propertyId', response.data.id);
-            fileFormData.append('fileType', 'lease');
+            let retryCount = 0;
+            const maxRetries = 3;
+            let uploadSuccess = false;
             
-            try {
-              const uploadResponse = await axios.post(
-                `${apiUrl}/api/files/upload`, 
-                fileFormData,
-                {
-                  headers: {
-                    'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${token}`
-                  },
-                  onUploadProgress: (progressEvent) => {
-                    // Calculate overall progress
-                    const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                    const overallProgress = Math.round(((i * 100) + fileProgress) / leaseDocuments.length);
-                    setUploadProgress(overallProgress);
-                  }
+            while (retryCount < maxRetries && !uploadSuccess) {
+              try {
+                console.log(`[DEBUG] Uploading document ${i+1}/${leaseDocuments.length}: ${document.name}, size: ${(document.size / 1024 / 1024).toFixed(2)}MB`);
+                
+                // Additional compression for large images
+                let fileToUpload = document;
+                if (document.type.startsWith('image/') && document.size > 3 * 1024 * 1024) {
+                  console.log('[DEBUG] Document still large, applying additional compression');
+                  fileToUpload = await compressImage(document, 1280, 1280, 0.6);
+                  console.log(`[DEBUG] Compressed to: ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`);
                 }
-              );
-              
-              if (uploadResponse.data && uploadResponse.data.fileUrl) {
-                uploadedDocuments.push({
-                  url: uploadResponse.data.fileUrl,
-                  name: uploadResponse.data.originalName || document.name
+                
+                const fileFormData = new FormData();
+                fileFormData.append('file', fileToUpload);
+                fileFormData.append('propertyId', response.data.id);
+                fileFormData.append('fileType', 'lease');
+                
+                console.log(`[DEBUG] Upload attempt ${retryCount + 1} to: ${apiUrl}/api/files/upload`);
+                
+                // Create a timeout promise (30 seconds)
+                const timeoutPromise = new Promise((_, reject) => 
+                  setTimeout(() => reject(new Error('Upload timeout')), 30000)
+                );
+                
+                // Race between upload and timeout
+                const uploadPromise = axios.post(
+                  `${apiUrl}/api/files/upload`, 
+                  fileFormData,
+                  {
+                    headers: {
+                      'Content-Type': 'multipart/form-data',
+                      'Authorization': `Bearer ${token}`
+                    },
+                    onUploadProgress: (progressEvent) => {
+                      // Calculate overall progress
+                      const fileProgress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                      const overallProgress = Math.round(((i * 100) + fileProgress) / leaseDocuments.length);
+                      setUploadProgress(overallProgress);
+                    }
+                  }
+                );
+                
+                const uploadResponse = await Promise.race([uploadPromise, timeoutPromise]);
+                
+                if (uploadResponse.data && uploadResponse.data.fileUrl) {
+                  uploadedDocuments.push({
+                    url: uploadResponse.data.fileUrl,
+                    name: uploadResponse.data.originalName || document.name
+                  });
+                  uploadSuccess = true;
+                  uploadedCount++;
+                  console.log(`[DEBUG] Document ${i+1} uploaded successfully`);
+                }
+              } catch (fileUploadError) {
+                retryCount++;
+                console.error(`[ERROR] Failed to upload document ${document.name} (attempt ${retryCount}):`, fileUploadError);
+                console.error('[ERROR] Upload error details:', {
+                  message: fileUploadError.message,
+                  status: fileUploadError.response?.status,
+                  data: fileUploadError.response?.data
                 });
+                
+                if (retryCount < maxRetries) {
+                  console.log(`[DEBUG] Retrying upload in ${retryCount} seconds...`);
+                  await new Promise(resolve => setTimeout(resolve, retryCount * 1000));
+                } else {
+                  console.error(`[ERROR] Upload failed after ${maxRetries} attempts`);
+                  failedUploads.push({
+                    name: document.name,
+                    error: fileUploadError.message
+                  });
+                }
               }
-            } catch (fileUploadError) {
-              console.error(`Error uploading document ${document.name}:`, fileUploadError);
-              alert(`Failed to upload ${document.name}. Other documents will continue uploading.`);
             }
+          }
+          
+          // Show error only if there were failures
+          if (failedUploads.length > 0) {
+            console.error('[ERROR] Some uploads failed:', failedUploads);
+            alert(`Failed to upload ${failedUploads.length} document(s). You can try uploading them again later.`);
+          }
+          
+          // Log success silently for debugging
+          if (uploadedCount > 0) {
+            console.log(`[DEBUG] ${uploadedCount} documents uploaded successfully`);
           }
           
           setUploadStatus('success');
@@ -1485,12 +1666,12 @@ export default function AddUnit() {
           
             {/* Upload Lease - Multiple Files */}
             <div className="w-full mb-12">
-              <label className={`box-border flex flex-row justify-center items-center p-[16px_20px] gap-[8px] w-full h-[120px] bg-white border-2 border-dashed rounded-[16px] cursor-pointer transition-all duration-200 ${
+              <label className={`box-border flex flex-row justify-center items-center p-[16px_20px] gap-[8px] w-full h-[120px] bg-white border-2 border-dashed rounded-[16px] cursor-pointer transition-all duration-200 overflow-hidden ${
               leaseDocuments.length > 0 
                 ? 'border-green-500 bg-green-50' 
                 : 'border-[#D1E7D5] hover:border-[#A8D5B8]'
             }`}>
-              <div className="flex flex-col justify-center items-center p-0 gap-[12px] w-full">
+              <div className="flex flex-col justify-center items-center p-0 gap-[12px] w-full max-w-full px-4">
                 {leaseDocuments.length > 0 ? (
                   <>
                     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1504,16 +1685,11 @@ export default function AddUnit() {
                       Click to add more files
                     </div>
                     {uploadProgress > 0 && uploadProgress < 100 && (
-                      <div className="w-full max-w-[200px] h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="w-full max-w-[180px] h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
                         <div 
-                          className="h-full bg-green-500 transition-all duration-300"
+                          className="h-full bg-green-500 transition-all duration-300 rounded-full"
                           style={{ width: `${uploadProgress}%` }}
                         />
-                      </div>
-                    )}
-                    {uploadStatus === 'success' && (
-                      <div className="text-[12px] text-green-600 font-semibold">
-                        Successfully uploaded
                       </div>
                     )}
                   </>

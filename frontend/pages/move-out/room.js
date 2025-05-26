@@ -534,59 +534,103 @@ export default function MoveOutRoom() {
     }
   };
 
-  // Compress image function
-  const compressImage = async (file, maxWidth = 1920, maxHeight = 1920, quality = 0.8) => {
+  // Compress image function with better error handling
+  const compressImage = async (file, maxWidth = 1920, maxHeight = 1920, quality = 0.7) => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
+      try {
+        // Check if file is valid
+        if (!file || !file.type || !file.type.startsWith('image/')) {
+          console.log('[DEBUG] Invalid file type, returning original');
+          resolve(file);
+          return;
+        }
 
-          // Calculate new dimensions
-          if (width > height) {
-            if (width > maxWidth) {
-              height = Math.round((height * maxWidth) / width);
-              width = maxWidth;
-            }
-          } else {
-            if (height > maxHeight) {
-              width = Math.round((width * maxHeight) / height);
-              height = maxHeight;
-            }
-          }
+        const reader = new FileReader();
+        
+        reader.onload = (event) => {
+          const img = new Image();
+          
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              let width = img.width;
+              let height = img.height;
 
-          canvas.width = width;
-          canvas.height = height;
-
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                // Create a new File object with the compressed blob
-                const compressedFile = new File([blob], file.name, {
-                  type: 'image/jpeg',
-                  lastModified: Date.now()
-                });
-                console.log(`[DEBUG] Image compressed: ${file.size} bytes -> ${blob.size} bytes`);
-                resolve(compressedFile);
+              // Calculate new dimensions
+              if (width > height) {
+                if (width > maxWidth) {
+                  height = Math.round((height * maxWidth) / width);
+                  width = maxWidth;
+                }
               } else {
-                reject(new Error('Canvas toBlob failed'));
+                if (height > maxHeight) {
+                  width = Math.round((width * maxHeight) / height);
+                  height = maxHeight;
+                }
               }
-            },
-            'image/jpeg',
-            quality
-          );
+
+              canvas.width = width;
+              canvas.height = height;
+
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+
+              // Try different quality levels if needed
+              let currentQuality = quality;
+              const tryCompress = () => {
+                canvas.toBlob(
+                  (blob) => {
+                    if (blob) {
+                      // Check if compressed size is reasonable
+                      if (blob.size > 5 * 1024 * 1024 && currentQuality > 0.3) {
+                        // Still too large, try lower quality
+                        currentQuality -= 0.1;
+                        console.log(`[DEBUG] Image still large (${(blob.size / 1024 / 1024).toFixed(2)}MB), trying quality ${currentQuality}`);
+                        tryCompress();
+                      } else {
+                        // Create a new File object with the compressed blob
+                        const compressedFile = new File([blob], file.name, {
+                          type: 'image/jpeg',
+                          lastModified: Date.now()
+                        });
+                        console.log(`[DEBUG] Image compressed: ${(file.size / 1024 / 1024).toFixed(2)}MB -> ${(blob.size / 1024 / 1024).toFixed(2)}MB`);
+                        resolve(compressedFile);
+                      }
+                    } else {
+                      console.error('[ERROR] Canvas toBlob failed');
+                      resolve(file); // Return original file if compression fails
+                    }
+                  },
+                  'image/jpeg',
+                  currentQuality
+                );
+              };
+              
+              tryCompress();
+            } catch (error) {
+              console.error('[ERROR] Canvas processing failed:', error);
+              resolve(file); // Return original file if processing fails
+            }
+          };
+          
+          img.onerror = () => {
+            console.error('[ERROR] Image load failed');
+            resolve(file); // Return original file if image load fails
+          };
+          
+          img.src = event.target.result;
         };
-        img.onerror = () => reject(new Error('Image load failed'));
-      };
-      reader.onerror = () => reject(new Error('File read failed'));
+        
+        reader.onerror = () => {
+          console.error('[ERROR] File read failed');
+          resolve(file); // Return original file if read fails
+        };
+        
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('[ERROR] Compression setup failed:', error);
+        resolve(file); // Return original file if any error occurs
+      }
     });
   };
   
@@ -831,40 +875,79 @@ export default function MoveOutRoom() {
       console.log(`[SUBMIT] Photos to upload: ${photosToUpload.length} out of ${newPhotos.length} total photos`);
       
       if (photosToUpload.length > 0) {
+        let uploadedCount = 0;
+        let failedUploads = [];
+        
         for (let i = 0; i < photosToUpload.length; i++) {
           const photo = photosToUpload[i];
+          let retryCount = 0;
+          const maxRetries = 3;
+          let uploadSuccess = false;
           
-          try {
-            // Create form data with the actual file
-            const formData = new FormData();
-            console.log(`[DEBUG] Uploading file: ${photo.name}, size: ${(photo.file.size / 1024 / 1024).toFixed(2)} MB, type: ${photo.file.type}`);
-            formData.append('photo', photo.file, photo.name || `moveout_photo_${Date.now()}_${i}.jpg`);
-            formData.append('note', 'Move-out photo');
-            formData.append('property_id', propertyId);
-            formData.append('room_id', roomId);
-            formData.append('move_out', 'true');
-            
-            // Upload photo
-            console.log(`[DEBUG] Uploading move-out photo to API: ${apiService.getBaseUrl()}/api/photos/upload-room/${propertyId}/${roomId}`);
-            const uploadResponse = await apiService.photos.uploadForRoom(propertyId, roomId, formData);
-            console.log(`Photo ${i+1} uploaded successfully, response:`, uploadResponse.data);
-          } catch (uploadError) {
-            console.error(`Failed to upload photo ${i+1}:`, uploadError);
-            console.error(`[ERROR] Move-out upload error details:`, {
-              message: uploadError.message,
-              status: uploadError.response?.status,
-              data: uploadError.response?.data,
-              config: {
-                url: uploadError.config?.url,
-                method: uploadError.config?.method,
-                baseURL: uploadError.config?.baseURL
+          while (retryCount < maxRetries && !uploadSuccess) {
+            try {
+              // Create form data with the actual file
+              const formData = new FormData();
+              console.log(`[DEBUG] Uploading file: ${photo.name}, size: ${(photo.file.size / 1024 / 1024).toFixed(2)} MB, type: ${photo.file.type}`);
+              
+              // Additional compression if file is still large
+              let fileToUpload = photo.file;
+              if (photo.file.size > 3 * 1024 * 1024) {
+                console.log('[DEBUG] File still large, applying additional compression');
+                fileToUpload = await compressImage(photo.file, 1280, 1280, 0.6);
               }
-            });
-            // Show error to user
-            if (typeof window !== 'undefined' && window.alert) {
-              window.alert(`Failed to upload photo ${i+1}. Please check your connection and try again.`);
+              
+              formData.append('photo', fileToUpload, photo.name || `moveout_photo_${Date.now()}_${i}.jpg`);
+              formData.append('note', 'Move-out photo');
+              formData.append('property_id', propertyId);
+              formData.append('room_id', roomId);
+              formData.append('move_out', 'true');
+              
+              // Upload photo with timeout
+              console.log(`[DEBUG] Upload attempt ${retryCount + 1} to API: ${apiService.getBaseUrl()}/api/photos/upload-room/${propertyId}/${roomId}`);
+              
+              // Create a timeout promise
+              const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Upload timeout')), 30000) // 30 second timeout
+              );
+              
+              // Race between upload and timeout
+              const uploadResponse = await Promise.race([
+                apiService.photos.uploadForRoom(propertyId, roomId, formData),
+                timeoutPromise
+              ]);
+              
+              console.log(`Photo ${i+1} uploaded successfully, response:`, uploadResponse.data);
+              uploadSuccess = true;
+              uploadedCount++;
+              
+            } catch (uploadError) {
+              retryCount++;
+              console.error(`[ERROR] Failed to upload photo ${i+1} (attempt ${retryCount}):`, uploadError);
+              
+              if (retryCount < maxRetries) {
+                console.log(`[DEBUG] Retrying upload in ${retryCount} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, retryCount * 1000));
+              } else {
+                console.error(`[ERROR] Upload failed after ${maxRetries} attempts`);
+                failedUploads.push({
+                  index: i + 1,
+                  name: photo.name,
+                  error: uploadError.message
+                });
+              }
             }
           }
+        }
+        
+        // Show summary
+        if (failedUploads.length > 0) {
+          console.error('[ERROR] Some uploads failed:', failedUploads);
+          if (typeof window !== 'undefined' && window.alert) {
+            window.alert(`Failed to upload ${failedUploads.length} photo(s). The rest were uploaded successfully.`);
+          }
+        } else if (uploadedCount > 0) {
+          console.log(`[SUCCESS] All ${uploadedCount} photos uploaded successfully`);
         }
       }
       
