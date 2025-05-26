@@ -534,6 +534,61 @@ export default function MoveOutRoom() {
     }
   };
 
+  // Compress image function
+  const compressImage = async (file, maxWidth = 1920, maxHeight = 1920, quality = 0.8) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                // Create a new File object with the compressed blob
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now()
+                });
+                console.log(`[DEBUG] Image compressed: ${file.size} bytes -> ${blob.size} bytes`);
+                resolve(compressedFile);
+              } else {
+                reject(new Error('Canvas toBlob failed'));
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = () => reject(new Error('Image load failed'));
+      };
+      reader.onerror = () => reject(new Error('File read failed'));
+    });
+  };
   
   const handleTakePhoto = () => {
     console.log('[DEBUG] handleTakePhoto called');
@@ -545,22 +600,36 @@ export default function MoveOutRoom() {
       fileInput.capture = 'environment'; // Prefer the back camera
       
       // Listen for the change event on the file input
-      fileInput.onchange = (event) => {
+      fileInput.onchange = async (event) => {
         console.log('[DEBUG] File input change event triggered');
         const file = event.target.files[0];
         if (file) {
-          console.log('[DEBUG] File selected:', file.name, file.size);
-          // Process the image file
-          setNewPhotos(prevPhotos => {
-            const updatedPhotos = [...prevPhotos, {
-              id: `new_${Date.now()}`,
-              src: URL.createObjectURL(file),
-              file: file,
-              name: file.name
-            }];
-            console.log('[DEBUG] Updated photos array:', updatedPhotos);
-            return updatedPhotos;
-          });
+          try {
+            console.log(`[DEBUG] Original file: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+            
+            // Compress the image if it's larger than 2MB
+            let processedFile = file;
+            if (file.size > 2 * 1024 * 1024) {
+              console.log('[DEBUG] Compressing image...');
+              processedFile = await compressImage(file);
+              console.log(`[DEBUG] Compressed file size: ${(processedFile.size / 1024 / 1024).toFixed(2)} MB`);
+            }
+            
+            // Process the image file
+            setNewPhotos(prevPhotos => {
+              const updatedPhotos = [...prevPhotos, {
+                id: `new_${Date.now()}`,
+                src: URL.createObjectURL(processedFile),
+                file: processedFile,
+                name: file.name
+              }];
+              console.log('[DEBUG] Updated photos array:', updatedPhotos);
+              return updatedPhotos;
+            });
+          } catch (error) {
+            console.error('[ERROR] Failed to process image:', error);
+            alert('Failed to process image. Please try again.');
+          }
         } else {
           console.log('[DEBUG] No file selected');
         }
@@ -587,27 +656,47 @@ export default function MoveOutRoom() {
       fileInput.multiple = true; // Allow selecting multiple images
       
       // Listen for the change event on the file input
-      fileInput.onchange = (event) => {
+      fileInput.onchange = async (event) => {
         console.log('[DEBUG] Gallery file input change event triggered');
         const files = event.target.files;
         if (files && files.length > 0) {
           console.log('[DEBUG] Files selected:', files.length);
-          // Process the selected image files
-          const newUploadedPhotos = Array.from(files).map((file, index) => ({
-            id: `new_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-            src: URL.createObjectURL(file),
-            file: file,
-            name: file.name
-          }));
-          
-          console.log('[DEBUG] New uploaded photos:', newUploadedPhotos);
-          
-          // Add the new photos to the existing photos array
-          setNewPhotos(prevPhotos => {
-            const updatedPhotos = [...prevPhotos, ...newUploadedPhotos];
-            console.log('[DEBUG] Updated photos array:', updatedPhotos);
-            return updatedPhotos;
-          });
+          try {
+            // Process each selected image file
+            const processedPhotos = [];
+            
+            for (let i = 0; i < files.length; i++) {
+              const file = files[i];
+              console.log(`[DEBUG] Processing file ${i+1}/${files.length}: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+              
+              // Compress the image if it's larger than 2MB
+              let processedFile = file;
+              if (file.size > 2 * 1024 * 1024) {
+                console.log(`[DEBUG] Compressing image ${i+1}...`);
+                processedFile = await compressImage(file);
+                console.log(`[DEBUG] Compressed size: ${(processedFile.size / 1024 / 1024).toFixed(2)} MB`);
+              }
+              
+              processedPhotos.push({
+                id: `new_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                src: URL.createObjectURL(processedFile),
+                file: processedFile,
+                name: file.name
+              });
+            }
+            
+            console.log('[DEBUG] Processed photos:', processedPhotos);
+            
+            // Add all processed photos to the existing photos array
+            setNewPhotos(prevPhotos => {
+              const updatedPhotos = [...prevPhotos, ...processedPhotos];
+              console.log('[DEBUG] Updated photos array:', updatedPhotos);
+              return updatedPhotos;
+            });
+          } catch (error) {
+            console.error('[ERROR] Failed to process images:', error);
+            alert('Failed to process some images. Please try again.');
+          }
         } else {
           console.log('[DEBUG] No files selected from gallery');
         }
@@ -748,6 +837,7 @@ export default function MoveOutRoom() {
           try {
             // Create form data with the actual file
             const formData = new FormData();
+            console.log(`[DEBUG] Uploading file: ${photo.name}, size: ${(photo.file.size / 1024 / 1024).toFixed(2)} MB, type: ${photo.file.type}`);
             formData.append('photo', photo.file, photo.name || `moveout_photo_${Date.now()}_${i}.jpg`);
             formData.append('note', 'Move-out photo');
             formData.append('property_id', propertyId);

@@ -265,19 +265,32 @@ export default function UploadPhotos() {
         fileInput.capture = 'environment'; // Prefer the back camera
         
         // Listen for the change event on the file input
-        fileInput.onchange = (event) => {
+        fileInput.onchange = async (event) => {
           const file = event.target.files[0];
           if (file) {
-            // Process the image file
-            
-            // Store file object for upload and create preview
-            setPhotos(prevPhotos => [...prevPhotos, {
-              id: `new_${Date.now()}`,
-              src: URL.createObjectURL(file),
-              file: file,  // Keep the actual file object for upload
-              name: file.name,
-              isNew: true  // Flag to indicate this is a new photo
-            }]);
+            try {
+              console.log(`[DEBUG] Original file size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+              
+              // Compress the image if it's larger than 2MB
+              let processedFile = file;
+              if (file.size > 2 * 1024 * 1024) {
+                console.log('[DEBUG] Compressing image...');
+                processedFile = await compressImage(file);
+                console.log(`[DEBUG] Compressed file size: ${(processedFile.size / 1024 / 1024).toFixed(2)} MB`);
+              }
+              
+              // Store file object for upload and create preview
+              setPhotos(prevPhotos => [...prevPhotos, {
+                id: `new_${Date.now()}`,
+                src: URL.createObjectURL(processedFile),
+                file: processedFile,  // Keep the compressed file object for upload
+                name: file.name,
+                isNew: true  // Flag to indicate this is a new photo
+              }]);
+            } catch (error) {
+              console.error('[ERROR] Failed to process image:', error);
+              toast.error('Failed to process image. Please try again.');
+            }
           }
         };
         
@@ -303,20 +316,40 @@ export default function UploadPhotos() {
       fileInput.multiple = true; // Allow selecting multiple images
       
       // Listen for the change event on the file input
-      fileInput.onchange = (event) => {
+      fileInput.onchange = async (event) => {
         const files = event.target.files;
         if (files && files.length > 0) {
-          // Process the selected image files
-          const newPhotos = Array.from(files).map(file => ({
-            id: `new_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-            src: URL.createObjectURL(file),
-            file: file,  // Keep the actual file object for upload
-            name: file.name,
-            isNew: true  // Flag to indicate this is a new photo
-          }));
-          
-          // Add the new photos to the existing photos array
-          setPhotos(prevPhotos => [...prevPhotos, ...newPhotos]);
+          try {
+            // Process each selected image file
+            const processedPhotos = [];
+            
+            for (let i = 0; i < files.length; i++) {
+              const file = files[i];
+              console.log(`[DEBUG] Processing file ${i+1}/${files.length}: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+              
+              // Compress the image if it's larger than 2MB
+              let processedFile = file;
+              if (file.size > 2 * 1024 * 1024) {
+                console.log(`[DEBUG] Compressing image ${i+1}...`);
+                processedFile = await compressImage(file);
+                console.log(`[DEBUG] Compressed size: ${(processedFile.size / 1024 / 1024).toFixed(2)} MB`);
+              }
+              
+              processedPhotos.push({
+                id: `new_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+                src: URL.createObjectURL(processedFile),
+                file: processedFile,  // Keep the compressed file object for upload
+                name: file.name,
+                isNew: true  // Flag to indicate this is a new photo
+              });
+            }
+            
+            // Add all processed photos to the existing photos array
+            setPhotos(prevPhotos => [...prevPhotos, ...processedPhotos]);
+          } catch (error) {
+            console.error('[ERROR] Failed to process images:', error);
+            toast.error('Failed to process some images. Please try again.');
+          }
         }
       };
       
@@ -327,6 +360,62 @@ export default function UploadPhotos() {
     }
     
     setShowPhotoOptions(false);
+  };
+
+  // Compress image function
+  const compressImage = async (file, maxWidth = 1920, maxHeight = 1920, quality = 0.8) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                // Create a new File object with the compressed blob
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now()
+                });
+                console.log(`[DEBUG] Image compressed: ${file.size} bytes -> ${blob.size} bytes`);
+                resolve(compressedFile);
+              } else {
+                reject(new Error('Canvas toBlob failed'));
+              }
+            },
+            'image/jpeg',
+            quality
+          );
+        };
+        img.onerror = () => reject(new Error('Image load failed'));
+      };
+      reader.onerror = () => reject(new Error('File read failed'));
+    });
   };
 
   const handleDeletePhoto = (index, isExisting) => {
@@ -462,11 +551,14 @@ export default function UploadPhotos() {
             // Create form data with the actual file
             const formData = new FormData();
             if (photo.file) {
+              console.log(`[DEBUG] Uploading file: ${photo.name}, size: ${(photo.file.size / 1024 / 1024).toFixed(2)} MB, type: ${photo.file.type}`);
               formData.append('photo', photo.file, photo.name || `photo_${Date.now()}_${i}.jpg`);
             } else {
               // If we don't have a file (unlikely), try to get one from the data URL
+              console.log('[DEBUG] No file object, creating blob from data URL');
               const response = await fetch(photo.src);
               const blob = await response.blob();
+              console.log(`[DEBUG] Created blob, size: ${(blob.size / 1024 / 1024).toFixed(2)} MB, type: ${blob.type}`);
               formData.append('photo', blob, photo.name || `photo_${Date.now()}_${i}.jpg`);
             }
             
@@ -476,6 +568,12 @@ export default function UploadPhotos() {
             
             // Upload photo
             console.log(`[DEBUG] Uploading to API: ${apiService.getBaseUrl()}/api/photos/upload-room/${id}/${roomId}`);
+            console.log('[DEBUG] FormData contents:', {
+              property_id: id,
+              room_id: roomId,
+              note: photo.note || ''
+            });
+            
             const uploadResponse = await apiService.photos.uploadForRoom(id, roomId, formData);
             console.log(`[DEBUG] Photo ${i+1} uploaded successfully, response:`, uploadResponse.data);
           } catch (uploadError) {
