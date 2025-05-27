@@ -10,9 +10,12 @@ const InputError = ({ message }) => {
   if (!message) return null;
   
   return (
-    <div className="absolute left-4 top-full mt-1 bg-red-50 border border-red-200 rounded-lg px-3 py-2 text-xs text-red-600 font-medium z-50">
-      <div className="absolute -top-2 left-4 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[6px] border-b-red-50"></div>
-      <div className="absolute -top-[9px] left-4 w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-b-[6px] border-b-red-200"></div>
+    <div className="mt-1 ml-2 text-xs text-red-400 font-medium flex items-center gap-1">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="6" cy="6" r="5.5" stroke="currentColor" strokeWidth="1"/>
+        <path d="M6 3.5V6.5" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
+        <circle cx="6" cy="8.5" r="0.5" fill="currentColor"/>
+      </svg>
       {message}
     </div>
   );
@@ -1546,30 +1549,30 @@ export default function AddUnit() {
             </div>
           
             {/* Property Name Input */}
-            <div className="relative mb-4">
+            <div className="mb-4">
               <div className={`box-border flex flex-row items-center p-[18px_20px] gap-[8px] w-full h-[56px] ${
                 errors.propertyName ? 'bg-red-50 border-red-300' : 'bg-white border-[#D1E7D5]'
               } border rounded-[16px] hover:border-[#A8D5B8] transition-all duration-200`}>
-              <div className="flex-shrink-0 min-w-[20px]">
-                <HomeIcon />
+                <div className="flex-shrink-0 min-w-[20px]">
+                  <HomeIcon />
+                </div>
+                <input
+                  type="text"
+                  value={propertyName}
+                  onChange={(e) => {
+                    setPropertyName(e.target.value);
+                    setErrors(prev => ({ ...prev, propertyName: '' }));
+                  }}
+                  placeholder="What should we call this place?"
+                  className="flex-1 h-[19px] font-bold text-[14px] leading-[19px] text-[#515964] bg-transparent border-none outline-none placeholder-[#A0A0A0]"
+                  required
+                />
               </div>
-              <input
-                type="text"
-                value={propertyName}
-                onChange={(e) => {
-                  setPropertyName(e.target.value);
-                  setErrors(prev => ({ ...prev, propertyName: '' }));
-                }}
-                placeholder="What should we call this place?"
-                className="flex-1 h-[19px] font-bold text-[14px] leading-[19px] text-[#515964] bg-transparent border-none outline-none placeholder-[#A0A0A0]"
-                required
-              />
-            </div>
               <InputError message={errors.propertyName} />
             </div>
           
             {/* Address Input with Google Autocomplete */}
-            <div className="relative mb-4">
+            <div className="mb-4">
               <div className={`box-border flex flex-row items-center p-[18px_20px] gap-[8px] w-full h-[56px] ${
                 errors.address ? 'bg-red-50 border-red-300' : 'bg-white border-[#D1E7D5]'
               } border rounded-[16px] hover:border-[#A8D5B8] transition-all duration-200`}>
@@ -1677,7 +1680,7 @@ export default function AddUnit() {
             </div>
           
             {/* Unit Number Input */}
-            <div className="relative mb-6">
+            <div className="mb-6">
               <div className={`box-border flex flex-row items-center p-[18px_20px] gap-[8px] w-full h-[56px] ${
                 errors.unitNumber ? 'bg-red-50 border-red-300' : 'bg-white border-[#D1E7D5]'
               } border rounded-[16px] hover:border-[#A8D5B8] transition-all duration-200`}>
@@ -1712,7 +1715,7 @@ export default function AddUnit() {
               </div>
             
             {/* Lease Duration Inputs */}
-            <div className="relative w-full">
+            <div className="w-full">
               <div className="w-full flex flex-row gap-[10px]">
                 {/* Duration Input - equal width */}
                 <div className={`box-border flex flex-row items-center p-[18px_20px] gap-[8px] w-1/2 h-[56px] ${
@@ -1766,7 +1769,7 @@ export default function AddUnit() {
             </div>
           
             {/* Contract Start Date */}
-            <div className="relative mb-4">
+            <div className="mb-4">
               <div onClick={() => document.getElementById('contract-start-date').showPicker()} className={`box-border flex flex-row items-center p-[18px_20px] gap-[8px] w-full h-[56px] ${
                 errors.contractStartDate ? 'bg-red-50 border-red-300' : 'bg-white border-[#D1E7D5]'
               } border rounded-[16px] relative cursor-pointer hover:border-[#A8D5B8] transition-all duration-200`}>
@@ -1801,7 +1804,7 @@ export default function AddUnit() {
             </div>
           
             {/* Move In Date */}
-            <div className="relative mb-4">
+            <div className="mb-4">
               <div onClick={() => document.getElementById('move-in-date').showPicker()} className={`box-border flex flex-row items-center p-[18px_20px] gap-[8px] w-full h-[56px] ${
                 errors.moveInDate ? 'bg-red-50 border-red-300' : 'bg-white border-[#D1E7D5]'
               } border rounded-[16px] relative cursor-pointer hover:border-[#A8D5B8] transition-all duration-200`}>
@@ -1828,7 +1831,7 @@ export default function AddUnit() {
             </div>
           
             {/* Deposit Amount */}
-            <div className="relative mb-4">
+            <div className="mb-4">
               <div className={`box-border flex flex-row items-center p-[18px_20px] gap-[8px] w-full h-[56px] ${
                 errors.depositAmount ? 'bg-red-50 border-red-300' : 'bg-white border-[#D1E7D5]'
               } border rounded-[16px] hover:border-[#A8D5B8] transition-all duration-200`}>

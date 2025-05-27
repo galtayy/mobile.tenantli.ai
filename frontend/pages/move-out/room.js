@@ -581,12 +581,25 @@ export default function MoveOutRoom() {
                 canvas.toBlob(
                   (blob) => {
                     if (blob) {
-                      // Check if compressed size is reasonable
-                      if (blob.size > 5 * 1024 * 1024 && currentQuality > 0.3) {
-                        // Still too large, try lower quality
-                        currentQuality -= 0.1;
-                        console.log(`[DEBUG] Image still large (${(blob.size / 1024 / 1024).toFixed(2)}MB), trying quality ${currentQuality}`);
-                        tryCompress();
+                      // Check if compressed size is reasonable (changed from 5MB to 2MB)
+                      if (blob.size > 2 * 1024 * 1024 && currentQuality > 0.3) {
+                        // Still too large, try lower quality or reduce dimensions
+                        if (currentQuality > 0.5) {
+                          currentQuality -= 0.1;
+                          console.log(`[DEBUG] Image still large (${(blob.size / 1024 / 1024).toFixed(2)}MB), trying quality ${currentQuality}`);
+                          tryCompress();
+                        } else {
+                          // If quality is already low, reduce dimensions
+                          const reductionFactor = 0.8;
+                          width = Math.round(width * reductionFactor);
+                          height = Math.round(height * reductionFactor);
+                          canvas.width = width;
+                          canvas.height = height;
+                          ctx.drawImage(img, 0, 0, width, height);
+                          console.log(`[DEBUG] Reducing dimensions to ${width}x${height}`);
+                          currentQuality = 0.6; // Reset quality after dimension reduction
+                          tryCompress();
+                        }
                       } else {
                         // Create a new File object with the compressed blob
                         const compressedFile = new File([blob], file.name, {
@@ -649,13 +662,20 @@ export default function MoveOutRoom() {
         const file = event.target.files[0];
         if (file) {
           try {
-            console.log(`[DEBUG] Original file: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+            console.log(`[DEBUG] Original file: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)} MB, type: ${file.type}`);
             
-            // Compress the image if it's larger than 2MB
-            let processedFile = file;
-            if (file.size > 2 * 1024 * 1024) {
+            // Check if HEIC format and convert
+            let fileToProcess = file;
+            if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic')) {
+              console.log('[DEBUG] HEIC format detected, will convert to JPEG');
+              // Note: Browser will handle HEIC automatically when creating blob
+            }
+            
+            // Compress the image if it's larger than 1MB (changed from 2MB)
+            let processedFile = fileToProcess;
+            if (fileToProcess.size > 1 * 1024 * 1024) {
               console.log('[DEBUG] Compressing image...');
-              processedFile = await compressImage(file);
+              processedFile = await compressImage(fileToProcess, 1280, 1280, 0.6);
               console.log(`[DEBUG] Compressed file size: ${(processedFile.size / 1024 / 1024).toFixed(2)} MB`);
             }
             
@@ -711,13 +731,19 @@ export default function MoveOutRoom() {
             
             for (let i = 0; i < files.length; i++) {
               const file = files[i];
-              console.log(`[DEBUG] Processing file ${i+1}/${files.length}: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+              console.log(`[DEBUG] Processing file ${i+1}/${files.length}: ${file.name}, size: ${(file.size / 1024 / 1024).toFixed(2)} MB, type: ${file.type}`);
               
-              // Compress the image if it's larger than 2MB
-              let processedFile = file;
-              if (file.size > 2 * 1024 * 1024) {
+              // Check if HEIC format
+              let fileToProcess = file;
+              if (file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic')) {
+                console.log('[DEBUG] HEIC format detected for gallery image');
+              }
+              
+              // Compress the image if it's larger than 1MB (changed from 2MB)
+              let processedFile = fileToProcess;
+              if (fileToProcess.size > 1 * 1024 * 1024) {
                 console.log(`[DEBUG] Compressing image ${i+1}...`);
-                processedFile = await compressImage(file);
+                processedFile = await compressImage(fileToProcess, 1280, 1280, 0.6);
                 console.log(`[DEBUG] Compressed size: ${(processedFile.size / 1024 / 1024).toFixed(2)} MB`);
               }
               
@@ -890,11 +916,12 @@ export default function MoveOutRoom() {
               const formData = new FormData();
               console.log(`[DEBUG] Uploading file: ${photo.name}, size: ${(photo.file.size / 1024 / 1024).toFixed(2)} MB, type: ${photo.file.type}`);
               
-              // Additional compression if file is still large
+              // Additional compression if file is still large (changed from 3MB to 2MB)
               let fileToUpload = photo.file;
-              if (photo.file.size > 3 * 1024 * 1024) {
-                console.log('[DEBUG] File still large, applying additional compression');
-                fileToUpload = await compressImage(photo.file, 1280, 1280, 0.6);
+              if (photo.file.size > 2 * 1024 * 1024) {
+                console.log(`[DEBUG] File still large (${(photo.file.size / 1024 / 1024).toFixed(2)}MB), applying additional compression`);
+                fileToUpload = await compressImage(photo.file, 1024, 1024, 0.5);
+                console.log(`[DEBUG] Final upload size: ${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB`);
               }
               
               formData.append('photo', fileToUpload, photo.name || `moveout_photo_${Date.now()}_${i}.jpg`);
@@ -906,9 +933,9 @@ export default function MoveOutRoom() {
               // Upload photo with timeout
               console.log(`[DEBUG] Upload attempt ${retryCount + 1} to API: ${apiService.getBaseUrl()}/api/photos/upload-room/${propertyId}/${roomId}`);
               
-              // Create a timeout promise
+              // Create a timeout promise (increased from 30s to 60s for slow connections)
               const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Upload timeout')), 30000) // 30 second timeout
+                setTimeout(() => reject(new Error('Upload timeout')), 60000) // 60 second timeout
               );
               
               // Race between upload and timeout
@@ -917,7 +944,7 @@ export default function MoveOutRoom() {
                 timeoutPromise
               ]);
               
-              console.log(`Photo ${i+1} uploaded successfully, response:`, uploadResponse.data);
+              console.log(`[SUCCESS] Photo ${i+1} uploaded successfully, response:`, uploadResponse.data);
               uploadSuccess = true;
               uploadedCount++;
               
@@ -929,7 +956,7 @@ export default function MoveOutRoom() {
                 console.log(`[DEBUG] Retrying upload in ${retryCount} seconds...`);
                 await new Promise(resolve => setTimeout(resolve, retryCount * 1000));
               } else {
-                console.error(`[ERROR] Upload failed after ${maxRetries} attempts`);
+                console.error(`[ERROR] Upload failed after ${maxRetries} attempts for file: ${photo.name} (${(photo.file.size / 1024 / 1024).toFixed(2)}MB)`);
                 failedUploads.push({
                   index: i + 1,
                   name: photo.name,

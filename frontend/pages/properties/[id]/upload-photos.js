@@ -275,9 +275,10 @@ export default function UploadPhotos() {
               let processedFile = file;
               const isHEIC = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic');
               
-              if (file.size > 2 * 1024 * 1024 || isHEIC) {
+              if (file.size > 1 * 1024 * 1024 || isHEIC) {
                 console.log('[DEBUG] Compressing/converting image...');
-                processedFile = await compressImage(file);
+                // More aggressive compression for photos taken with camera
+                processedFile = await compressImage(file, 1280, 1280, 0.6);
                 console.log(`[DEBUG] Processed file size: ${(processedFile.size / 1024 / 1024).toFixed(2)} MB`);
               }
               
@@ -329,11 +330,13 @@ export default function UploadPhotos() {
               const file = files[i];
               console.log(`[DEBUG] Processing file ${i+1}/${files.length}: ${(file.size / 1024 / 1024).toFixed(2)} MB`);
               
-              // Compress the image if it's larger than 2MB
+              // Compress images larger than 1MB or HEIC format
               let processedFile = file;
-              if (file.size > 2 * 1024 * 1024) {
+              const isHEIC = file.type === 'image/heic' || file.type === 'image/heif' || file.name.toLowerCase().endsWith('.heic');
+              
+              if (file.size > 1 * 1024 * 1024 || isHEIC) {
                 console.log(`[DEBUG] Compressing image ${i+1}...`);
-                processedFile = await compressImage(file);
+                processedFile = await compressImage(file, 1280, 1280, 0.6);
                 console.log(`[DEBUG] Compressed size: ${(processedFile.size / 1024 / 1024).toFixed(2)} MB`);
               }
               
@@ -364,7 +367,7 @@ export default function UploadPhotos() {
     setShowPhotoOptions(false);
   };
 
-  // Compress image function with better error handling
+  // Enhanced compress image function with more aggressive compression for production
   const compressImage = async (file, maxWidth = 1920, maxHeight = 1920, quality = 0.7) => {
     return new Promise((resolve, reject) => {
       try {
@@ -411,11 +414,22 @@ export default function UploadPhotos() {
                 canvas.toBlob(
                   (blob) => {
                     if (blob) {
-                      // Check if compressed size is reasonable
-                      if (blob.size > 5 * 1024 * 1024 && currentQuality > 0.3) {
+                      // More aggressive compression for production
+                      const targetSize = 2 * 1024 * 1024; // 2MB target
+                      if (blob.size > targetSize && currentQuality > 0.2) {
                         // Still too large, try lower quality
                         currentQuality -= 0.1;
                         console.log(`[DEBUG] Image still large (${(blob.size / 1024 / 1024).toFixed(2)}MB), trying quality ${currentQuality}`);
+                        tryCompress();
+                      } else if (blob.size > targetSize && width > 1280) {
+                        // If still too large, reduce dimensions further
+                        console.log(`[DEBUG] Reducing dimensions from ${width}x${height}`);
+                        width = Math.round(width * 0.8);
+                        height = Math.round(height * 0.8);
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        currentQuality = 0.5; // Reset quality for new size
                         tryCompress();
                       } else {
                         // Create a new File object with the compressed blob
@@ -610,9 +624,10 @@ export default function UploadPhotos() {
                 
                 // Additional compression if file is still large
                 let fileToUpload = photo.file;
-                if (photo.file.size > 3 * 1024 * 1024) {
+                if (photo.file.size > 2 * 1024 * 1024) {
                   console.log('[DEBUG] File still large, applying additional compression');
-                  fileToUpload = await compressImage(photo.file, 1280, 1280, 0.6);
+                  fileToUpload = await compressImage(photo.file, 1024, 1024, 0.5);
+                  console.log(`[DEBUG] Final upload size: ${(fileToUpload.size / 1024 / 1024).toFixed(2)} MB`);
                 }
                 
                 formData.append('photo', fileToUpload, photo.name || `photo_${Date.now()}_${i}.jpg`);
@@ -634,7 +649,7 @@ export default function UploadPhotos() {
               
               // Create a timeout promise
               const timeoutPromise = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Upload timeout')), 30000) // 30 second timeout
+                setTimeout(() => reject(new Error('Upload timeout')), 60000) // 60 second timeout for slow connections
               );
               
               // Race between upload and timeout
@@ -650,26 +665,39 @@ export default function UploadPhotos() {
             } catch (uploadError) {
               retryCount++;
               console.error(`[ERROR] Failed to upload photo ${i+1} (attempt ${retryCount}):`, uploadError);
+              console.error(`[ERROR] Error details:`, {
+                message: uploadError.message,
+                response: uploadError.response?.data,
+                status: uploadError.response?.status,
+                fileSize: photo.file ? (photo.file.size / 1024 / 1024).toFixed(2) + 'MB' : 'unknown'
+              });
               
               if (retryCount < maxRetries) {
                 console.log(`[DEBUG] Retrying upload in ${retryCount} seconds...`);
                 await new Promise(resolve => setTimeout(resolve, retryCount * 1000));
               } else {
                 console.error(`[ERROR] Upload failed after ${maxRetries} attempts`);
+                const errorMessage = uploadError.response?.data?.message || uploadError.message || 'Unknown error';
                 failedUploads.push({
                   index: i + 1,
                   name: photo.name,
-                  error: uploadError.message
+                  error: errorMessage,
+                  size: photo.file ? (photo.file.size / 1024 / 1024).toFixed(2) + 'MB' : 'unknown'
                 });
               }
             }
           }
         }
         
-        // Show summary
+        // Show detailed summary
         if (failedUploads.length > 0) {
           console.error('[ERROR] Some uploads failed:', failedUploads);
-          toast.error(`Failed to upload ${failedUploads.length} photo(s). Please check your connection and try again.`);
+          const largeFiles = failedUploads.filter(f => parseFloat(f.size) > 2).map(f => f.name);
+          if (largeFiles.length > 0) {
+            toast.error(`Some photos were too large even after compression. Please try taking photos at lower resolution.`);
+          } else {
+            toast.error(`Failed to upload ${failedUploads.length} photo(s). Please check your internet connection and try again.`);
+          }
         } else if (uploadedCount > 0) {
           console.log(`[SUCCESS] All ${uploadedCount} photos uploaded successfully`);
         }
