@@ -1072,11 +1072,14 @@ export default function AddRooms() {
       
       <div className="relative min-h-screen mobile-full-height w-full font-['Nunito'] overflow-hidden">
         {/* Header */}
-        <div className="fixed top-0 w-full bg-[#FBF5DA] z-20">
-          <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
-            <button 
-              className="flex items-center relative z-10 hover:opacity-75 transition-opacity duration-200"
-              onClick={async () => {
+        <div className="fixed top-0 left-0 right-0 bg-[#FBF5DA] z-20">
+          <div className="w-full max-w-[390px] mx-auto">
+            <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
+              <button 
+                className="relative z-50 w-10 h-10 flex items-center justify-center"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                 // Check if property is incomplete and should be deleted
                 const isIncomplete = localStorage.getItem(`property_${id}_incomplete`);
                 
@@ -1120,10 +1123,11 @@ export default function AddRooms() {
               aria-label="Go back"
             >
               <ArrowLeftIcon />
-            </button>
-            <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
-              {property?.description || property?.address || 'Property Details'}
-            </h1>
+              </button>
+              <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+                {property?.description || property?.address || 'Property Details'}
+              </h1>
+            </div>
           </div>
         </div>
       

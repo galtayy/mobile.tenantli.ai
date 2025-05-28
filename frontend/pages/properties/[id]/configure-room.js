@@ -336,20 +336,25 @@ export default function ConfigureRoom() {
       
       <div className="relative min-h-screen mobile-full-height w-full font-['Nunito'] overflow-hidden">
         {/* Header */}
-        <div className="fixed top-0 w-full bg-[#FBF5DA] z-20">
-          <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
-            {!returnUrl?.includes('/summary') && (
-              <Link 
-                href={id ? `/properties/${id}/add-rooms` : '/properties'}
-                className="flex items-center relative z-10 hover:opacity-75 transition-opacity duration-200"
-                aria-label="Go back"
-              >
-                <ArrowLeftIcon />
-              </Link>
-            )}
-            <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
-              {isReadOnly ? 'View Room' : (returnUrl?.includes('/summary') ? 'Edit Room' : 'Room Name')}
-            </h1>
+        <div className="fixed top-0 left-0 right-0 bg-[#FBF5DA] z-20">
+          <div className="w-full max-w-[390px] mx-auto">
+            <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
+              {!returnUrl?.includes('/summary') && (
+                <Link 
+                  href={id ? `/properties/${id}/add-rooms` : '/properties'}
+                  className="relative z-50 w-10 h-10 flex items-center justify-center"
+                  aria-label="Go back"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  <ArrowLeftIcon />
+                </Link>
+              )}
+              <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+                {isReadOnly ? 'View Room' : (returnUrl?.includes('/summary') ? 'Edit Room' : 'Room Name')}
+              </h1>
+            </div>
           </div>
         </div>
         

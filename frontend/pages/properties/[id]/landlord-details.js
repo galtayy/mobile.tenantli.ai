@@ -208,25 +208,29 @@ export default function LandlordDetails() {
       </Head>
       
       {/* Header - Fixed positioning */}
-      <div className="fixed top-0 w-full bg-[#FBF5DA] z-20">
-        <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
-          <button
-            className="absolute left-[20px] top-[50%] transform -translate-y-1/2 p-2"
-            onClick={() => {
-              const propertyID = id || propertyId;
-              if (propertyID) {
-                router.push(`/properties/${propertyID}/add-rooms`);
-              } else {
-                router.push('/');
-              }
-            }}
-            aria-label="Go back"
-          >
-            <ArrowLeftIcon />
-          </button>
-          <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
-            Landlord Details
-          </h1>
+      <div className="fixed top-0 left-0 right-0 bg-[#FBF5DA] z-20">
+        <div className="w-full max-w-[390px] mx-auto">
+          <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
+            <button
+              className="relative z-50 w-10 h-10 flex items-center justify-center"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const propertyID = id || propertyId;
+                if (propertyID) {
+                  router.push(`/properties/${propertyID}/add-rooms`);
+                } else {
+                  router.push('/');
+                }
+              }}
+              aria-label="Go back"
+            >
+              <ArrowLeftIcon />
+            </button>
+            <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+              Landlord Details
+            </h1>
+          </div>
         </div>
       </div>
       
