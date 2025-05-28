@@ -129,27 +129,24 @@ export default function MoveOutProperties() {
       </Head>
       
       <div className="w-full max-w-[390px] relative">
-        {/* Status Bar Space */}
-        <div className="h-[40px] w-full safe-area-top"></div>
-        
         {/* Header with Back Button */}
-        <div className="w-full h-[65px] border-b border-[#ECF0F5]">
-          <div className="flex flex-row justify-center items-center px-[10px] py-[20px] w-full h-[65px] relative">
+        <div className="fixed top-0 w-full max-w-[390px] bg-[#FBF5DA] z-20">
+          <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
             <button 
-              className="absolute left-[20px] top-[50%] transform -translate-y-1/2 z-[2] flex items-center justify-center w-[40px] h-[40px]"
+              className="relative z-50 w-10 h-10 flex items-center justify-center"
               onClick={() => router.push('/')}
               aria-label="Go back"
             >
               <BackIcon />
             </button>
-            <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420]">
+            <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
               Select Property to Move Out
             </h1>
           </div>
         </div>
       
         {/* Main Content */}
-        <div className="w-full px-4 pb-24">
+        <div className="w-full px-4 pb-24" style={{ paddingTop: '85px' }}>
           {properties.length === 0 ? (
             // Empty state when no properties exist
             <div className="w-full flex flex-col justify-end items-center gap-[20px] mt-8">

@@ -1523,8 +1523,8 @@ export default function AddUnit() {
       
       <div className="w-full h-full max-w-[500px] relative bg-[#FBF5DA] overflow-hidden overflow-x-hidden">
         {/* Header */}
-        <div className="absolute top-0 w-full bg-[#FBF5DA] z-10 max-w-[500px]">
-          <div className="flex flex-row items-center px-[20px] pt-[60px] pb-[20px] relative">
+        <div className="fixed top-0 w-full bg-[#FBF5DA] z-20">
+          <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
             <button 
               className="flex items-center relative z-10 hover:opacity-75 transition-opacity duration-200"
               onClick={() => router.push('/')}
@@ -1539,7 +1539,7 @@ export default function AddUnit() {
         </div>
         
         {/* Form - Scrollable content */}
-        <div className="h-full pt-[120px] pb-[120px] overflow-y-scroll overflow-x-hidden scrollable-form" style={{scrollbarWidth: "none", msOverflowStyle: "none", WebkitScrollbar: {display: "none", width: 0}}}>
+        <div className="h-full pt-[85px] pb-[120px] overflow-y-scroll overflow-x-hidden scrollable-form" style={{scrollbarWidth: "none", msOverflowStyle: "none", WebkitScrollbar: {display: "none", width: 0}}}>
           <form onSubmit={handleSubmit} className="w-full px-5 pb-32 form-container" onKeyDown={handleEnterKey}>
             {/* Add your home details section */}
             <div className="w-full mt-4 mb-6">

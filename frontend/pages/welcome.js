@@ -2,16 +2,23 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
 import { motion, AnimatePresence } from 'framer-motion';
+import Lottie from 'lottie-react';
+import splashAnimation from '../public/animations/splash.json';
 
 export default function Welcome() {
   const [showSplash, setShowSplash] = useState(true);
+  const [animationComplete, setAnimationComplete] = useState(false);
   
   useEffect(() => {
-    // Splash ekranını 2 saniye göster
+    // Animasyon bitişini bekle (1.2 saniye - daha hızlı)
     const timer = setTimeout(() => {
-      console.log('Splash screen closing...');
-      setShowSplash(false);
-    }, 1000);
+      console.log('Splash animation completed...');
+      setAnimationComplete(true);
+      // Hemen sonra splash'i kapat
+      setTimeout(() => {
+        setShowSplash(false);
+      }, 200);
+    }, 1200);
     
     return () => clearTimeout(timer);
   }, []);
@@ -47,23 +54,28 @@ export default function Welcome() {
         {showSplash ? (
           <motion.div
             key="splash"
-            className="fixed inset-0 bg-[#F8F4D6] z-50 flex items-center justify-center"
+            className="fixed inset-0 bg-[#FBF5DA] z-50 flex items-center justify-center"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }}
           >
-            {/* Splash screen görseli tüm ekranı kaplayacak */}
-            <motion.img 
-              src="/images/splash-fullscreen.png" 
-              alt="Tenantli Splash"
-              className="w-full h-full object-cover"
-              initial={{ scale: 1.1, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              onLoad={() => {
-                console.log('Image loaded');
-              }}
-            />
+            {/* Lottie Splash Animation */}
+            <div className="w-full h-full max-w-[390px] max-h-[844px] mx-auto">
+              <Lottie
+                animationData={splashAnimation}
+                loop={false}
+                autoplay={true}
+                style={{ 
+                  width: '100%', 
+                  height: '100%',
+                  backgroundColor: '#FBF5DA'
+                }}
+                onComplete={() => {
+                  console.log('Lottie animation completed');
+                  setAnimationComplete(true);
+                }}
+              />
+            </div>
           </motion.div>
         ) : (
           <motion.div 
@@ -87,7 +99,7 @@ export default function Welcome() {
             transition={{ duration: 0.8, ease: [0.4, 0.0, 0.2, 1], delay: 0.2 }}
           >
             <img
-              src="/images/welcome-illustration.png"
+              src="/images/welcome-illustration.svg"
               alt="Person relaxing on a green sofa"
               className="w-full h-auto max-h-[90vh] object-contain -translate-y-[-15%]"
             />

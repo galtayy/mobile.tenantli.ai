@@ -149,27 +149,24 @@ export default function MoveOutStart() {
       </Head>
       
       <div className="w-full max-w-[390px] relative">
-        {/* Status Bar Space */}
-        <div className="h-[40px] w-full safe-area-top"></div>
-        
         {/* Header */}
-        <div className="w-full h-[65px]">
-          <div className="flex flex-row justify-center items-center px-[10px] py-[20px] w-full h-[65px] relative">
+        <div className="fixed top-0 w-full max-w-[390px] bg-[#FBF5DA] z-20">
+          <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
             <button 
-              className="absolute left-[20px] top-[50%] transform -translate-y-1/2 z-10"
+              className="relative z-50 w-10 h-10 flex items-center justify-center"
               onClick={() => router.back()}
               aria-label="Go back"
             >
               <BackIcon />
             </button>
-            <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420]">
+            <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
               {step === 1 ? 'Move Out Process' : 'Select Move Out Date'}
             </h1>
           </div>
         </div>
       
         {/* Main Content */}
-        <div className="w-full px-4 pb-24">
+        <div className="w-full px-4 pb-24" style={{ paddingTop: '85px' }}>
           {step === 1 ? (
             // Step 1: Property information and confirmation
             <div className="w-full flex flex-col items-center">

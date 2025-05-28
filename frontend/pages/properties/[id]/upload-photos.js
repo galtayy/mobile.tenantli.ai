@@ -844,12 +844,9 @@ export default function UploadPhotos() {
         `}</style>
       </Head>
       
-      {/* Status Bar Space */}
-      <div className="w-full h-[40px] safe-area-top"></div>
-      
       {/* Header */}
-      <div className="w-full h-[65px] flex flex-col">
-        <div className="flex flex-row justify-center items-center w-full h-[65px] px-[10px] py-[20px] relative">
+      <div className="fixed top-0 w-full bg-[#FBF5DA] z-20">
+        <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
           <button
             className="absolute left-[20px] top-[50%] transform -translate-y-1/2 z-[2] flex justify-center items-center w-[44px] h-[44px]"
             onClick={(e) => {
@@ -864,14 +861,14 @@ export default function UploadPhotos() {
           >
             <ArrowLeftIcon />
           </button>
-          <h1 className="w-full max-w-[270px] font-semibold text-[18px] leading-[25px] text-center text-[#0B1420]">
-            Upload Photos
+          <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+            Document
           </h1>
         </div>
       </div>
       
       {/* Content Section */}
-      <div className="fixed left-0 right-0 w-full px-5 bg-[#FBF5DA]" style={{top: '105px', zIndex: 10}}>
+      <div className="fixed left-0 right-0 w-full px-5 bg-[#FBF5DA]" style={{top: '85px', zIndex: 10}}>
         <div className="w-full max-w-[350px] mx-auto safe-area-inset-left safe-area-inset-right">
           <h2 className="font-bold text-[16px] sm:text-[18px] leading-[22px] text-[#0B1420]">
             Let's document "{actualRoomName || 'Room'}" 📷
@@ -884,7 +881,7 @@ export default function UploadPhotos() {
       
       {/* Main Content Container - Scrollable */}
       <div className="fixed left-0 right-0 w-full px-5 bg-[#FBF5DA] overflow-y-auto overflow-x-hidden" 
-           style={{top: '180px', bottom: '84px', paddingBottom: '20px'}}>
+           style={{top: '160px', bottom: '84px', paddingBottom: '20px'}}>
         <div className="w-full max-w-[350px] mx-auto safe-area-inset-left safe-area-inset-right">
           {/* Upload Button - Always show */}
           <button 
@@ -894,7 +891,7 @@ export default function UploadPhotos() {
             <div className="flex flex-col items-center gap-3 p-4">
               <div className="w-[50px] h-[50px] flex items-center justify-center">
                 <img 
-                  src="/images/iconss/camera.png" 
+                  src="/images/iconss/frame.svg" 
                   alt="Camera Icon" 
                   className="w-full h-full object-contain"
                 />
@@ -993,7 +990,7 @@ export default function UploadPhotos() {
                     <div className={`w-[70px] h-[70px] rounded-full border ${roomQuality === 'good' ? 'border-[#4A9A53] border-2' : 'border-[#D1E7D5]'} flex items-center justify-center ${roomQuality === 'good' ? 'bg-[#F6FEF7]' : 'bg-white'} transition-all duration-200`}>
                       <div className="w-[40px] h-[40px] flex items-center justify-center">
                         <img 
-                          src="/images/iconss/smile.png" 
+                          src="/images/iconss/good.svg" 
                           alt="Looks Good Icon" 
                           className="w-full h-full object-contain"
                         />
@@ -1013,7 +1010,7 @@ export default function UploadPhotos() {
                     <div className={`w-[70px] h-[70px] rounded-full border ${roomQuality === 'attention' ? 'border-[#4A9A53] border-2' : 'border-[#D1E7D5]'} flex items-center justify-center ${roomQuality === 'attention' ? 'bg-[#F6FEF7]' : 'bg-white'} transition-all duration-200`}>
                       <div className="w-[40px] h-[40px] flex items-center justify-center">
                         <img 
-                          src="/images/iconss/sad.png" 
+                          src="/images/iconss/bad.svg" 
                           alt="Needs Attention Icon" 
                           className="w-full h-full object-contain"
                         />
@@ -1128,7 +1125,7 @@ export default function UploadPhotos() {
             ) : (
               <span className="font-bold text-[16px] leading-[22px] text-center text-[#D1E7E2]">
                 {allPhotos.length === 0 
-                  ? 'Add Photos to Continue' 
+                  ? 'Done' 
                   : !roomQuality 
                     ? 'Select Room Assessment to Continue' 
                     : 'Continue'}

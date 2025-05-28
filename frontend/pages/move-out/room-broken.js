@@ -945,11 +945,11 @@ export default function MoveOutRoom() {
       
       <div className="relative min-h-screen mobile-full-height w-full font-['Nunito'] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="fixed top-0 w-full bg-[#FBF5DA] z-10">
-          <div className="flex flex-row items-center px-[20px] pt-[60px] pb-[20px] relative">
+        <div className="fixed top-0 w-full max-w-[390px] bg-[#FBF5DA] z-20">
+          <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
             <button 
-              className="flex items-center relative z-10 hover:opacity-75 transition-opacity duration-200"
-              onClick={() => router.push(returnUrl || `/move-out/rooms?propertyId=${propertyId}`)}
+              className="relative z-50 w-10 h-10 flex items-center justify-center"
+              onClick={() => router.back()}
               aria-label="Go back"
             >
               <BackIcon />
@@ -963,7 +963,7 @@ export default function MoveOutRoom() {
         {/* Content */}
         <div className="w-full max-w-[390px] mx-auto flex flex-col flex-1">
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto px-5 pt-[120px] pb-24 scroll-y">
+          <div className="flex-1 overflow-y-auto px-5 pb-24 scroll-y" style={{ paddingTop: '85px' }}>
           <h2 className="font-bold text-[18px] text-[#0B1420] mt-4">
             {roomName}
           </h2>
@@ -1089,7 +1089,7 @@ export default function MoveOutRoom() {
                 className="box-border flex flex-col items-center justify-center w-full h-[99px] mt-4 bg-white border border-dashed border-[#D1E7D5] rounded-[16px] hover:bg-gray-50 hover:border-[#55A363] transition-all duration-200 active:scale-98"
               >
                 <div className="flex flex-col items-center justify-center gap-2 py-[14px]">
-                  {<img src="/images/iconss/camera.png"/>}
+                  {<img src="/images/iconss/frame.svg"/>}
                   <p className="font-bold text-[14px] leading-[19px] text-center text-[#515964]">
                     Take Photo & Add From Gallery
                   </p>

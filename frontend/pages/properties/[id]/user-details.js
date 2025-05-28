@@ -396,12 +396,9 @@ export default function UserDetails() {
         `}</style>
       </Head>
       
-      {/* Status Bar Space */}
-      <div className="w-full h-[40px] safe-area-top"></div>
-
       {/* Header - Fixed positioning */}
-      <div className="fixed w-full h-[65px] left-0 top-[40px] z-10 bg-[#FBF5DA]">
-        <div className="flex flex-row justify-center items-center py-[20px] px-[10px] gap-[10px] w-full h-[65px] safe-area-inset-left safe-area-inset-right">
+      <div className="fixed top-0 w-full bg-[#FBF5DA] z-20">
+        <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
           <button
             className="absolute left-[20px] top-[50%] transform -translate-y-1/2 p-2"
             onClick={() => {
@@ -416,14 +413,14 @@ export default function UserDetails() {
           >
             <ArrowLeftIcon />
           </button>
-          <h1 className="w-full max-w-[270px] font-semibold text-[18px] leading-[140%] text-center text-[#0B1420]">
+          <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
             Your Details
           </h1>
         </div>
       </div>
       
       {/* Main Content - Start after header */}
-      <div className="flex flex-col items-center w-full pt-[105px] px-4 px-safe pb-[100px]">
+      <div className="flex flex-col items-center w-full pt-[85px] px-4 px-safe pb-[100px]">
         <div className="w-full max-w-[350px] mx-auto">
           {/* Title and Subtitle */}
           <div className="flex flex-col gap-[4px] mb-6">

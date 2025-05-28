@@ -5,9 +5,14 @@ import Head from 'next/head';
 import { useAuth } from '../lib/auth';
 import { ArrowLeft } from 'lucide-react';
 
-export default function Menu() {
+export default function Menu({ isOpen, onClose }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  
+  // Check if this is being used as a standalone page or as a component
+  const isStandalone = isOpen === undefined && onClose === undefined;
+  const isMenuOpen = isStandalone ? true : isOpen;
+  const handleClose = isStandalone ? () => router.back() : onClose;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -70,70 +75,53 @@ export default function Menu() {
   }
 
   return (
-    <div className="relative w-[390px] h-[844px] bg-[#F5F6F8] font-['Nunito'] mx-auto animate-slideIn">
-      {/* Meta tags for better PWA experience */}
-      <Head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <meta name="theme-color" content="#F5F6F8" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <style jsx global>{`
-          @keyframes slideIn {
-            from {
-              transform: translateX(-100%);
-            }
-            to {
-              transform: translateX(0);
-            }
-          }
-          .animate-slideIn {
-            animation: slideIn 0.3s ease-out forwards;
-          }
-          body {
-            font-family: 'Nunito', sans-serif;
-            background-color: #F5F6F8;
-          }
-          @font-face {
-            font-family: 'SF Pro Display';
-            src: url('/fonts/SF-Pro-Display-Medium.otf') format('opentype');
-            font-weight: 500;
-            font-style: normal;
-          }
-        `}</style>
-      </Head>
+    <>
+      {/* Overlay */}
+      {isMenuOpen && !isStandalone && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300"
+          onClick={handleClose}
+        />
+      )}
       
-      {/* Status Bar */}
-      <div className="absolute w-[390px] h-[40px] left-0 top-0">
-        <div className="absolute w-[321px] h-[23.59px] left-[35px] top-[14px]">
-          {/* Status bar content would go here */}
+      {/* Side Menu */}
+      <div className={`fixed left-0 top-0 w-full max-w-[390px] h-full bg-[#F5F6F8] font-['Nunito'] z-50 transform transition-transform duration-300 ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        {/* Meta tags for better PWA experience */}
+        <Head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+          <meta name="theme-color" content="#F5F6F8" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        </Head>
+      
+        {/* Status Bar area */}
+        <div className="w-full bg-[#F5F6F8]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}></div>
+      
+        {/* Header */}
+        <div className="w-full h-[65px] bg-[#F5F6F8]">
+          <div className="flex flex-row justify-center items-center px-[20px] h-[65px] relative">
+            <button 
+              className="absolute left-[24px]"
+              onClick={handleClose}
+              aria-label="Close menu"
+            >
+              <ArrowLeft size={24} color="#2E3642" strokeWidth={1.5} />
+            </button>
+            <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420]">
+              Menu
+            </h1>
+          </div>
         </div>
-      </div>
       
-      {/* Header */}
-      <div className="absolute w-[390px] h-[65px] left-0 top-[40px]">
-        <div className="flex flex-row justify-center items-center p-[20px_10px] w-[390px] h-[65px] relative">
-          <button 
-            className="absolute w-[24px] h-[24px] left-[24px] top-[20.5px]"
-            onClick={() => router.back()}
-            aria-label="Go back"
-          >
-            <ArrowLeft size={24} color="#2E3642" strokeWidth={1.5} />
-          </button>
-          <h1 className="w-[270px] h-[25px] font-semibold text-[18px] leading-[25px] text-center text-[#0B1420]">
-            Menu
-          </h1>
-        </div>
-      </div>
-      
-      {/* Navigation Menu - Frame 873 */}
-      <div className="absolute flex flex-col items-center p-0 w-[342px] h-[256px] left-[calc(50%-342px/2)] top-[113px]">
+        {/* Navigation Menu */}
+        <div className="flex flex-col items-center px-[24px] pt-[8px]">
         {/* Move Out Option */}
         <div className="w-[342px] h-[64px] flex-none order-0 flex-grow-0 relative">
           <div className="flex flex-row items-center p-[12px_0px] gap-[16px] absolute w-[342px] h-[64px] left-0 top-0">
             <div className="w-[40px] h-[40px] flex items-center justify-center opacity-40 rounded-[225px]">
               <BuildingIcon />
             </div>
-            <Link href="/" className="font-semibold text-[16px] leading-[22px] text-[#111519]">
+            <Link href="/" className="font-semibold text-[16px] leading-[22px] text-[#111519]" onClick={handleClose}>
               Move out
             </Link>
           </div>
@@ -146,7 +134,7 @@ export default function Menu() {
             <div className="w-[40px] h-[40px] flex items-center justify-center opacity-40 rounded-[225px]">
               <KeyIcon />
             </div>
-            <Link href="/profile/change-password" className="font-semibold text-[16px] leading-[22px] text-[#111519]">
+            <Link href="/profile/change-password" className="font-semibold text-[16px] leading-[22px] text-[#111519]" onClick={handleClose}>
               Password Change
             </Link>
           </div>
@@ -178,6 +166,7 @@ export default function Menu() {
             <button 
               onClick={() => {
                 localStorage.removeItem('token');
+                handleClose();
                 router.push('/login');
               }}
               className="font-semibold text-[16px] leading-[22px] text-[#111519] text-left"
@@ -186,7 +175,8 @@ export default function Menu() {
             </button>
           </div>
         </div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

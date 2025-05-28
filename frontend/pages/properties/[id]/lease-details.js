@@ -519,7 +519,7 @@ export default function LeaseDetails() {
       <div className="relative min-h-screen mobile-full-height w-full font-['Nunito'] overflow-hidden">
         {/* Fixed Header */}
         <div className="fixed top-0 w-full bg-[#FBF5DA] z-20">
-          <div className="flex flex-row items-center px-[20px] pt-[60px] pb-[20px] relative safe-area-top">
+          <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
             <Link href="/" className="flex items-center relative z-10 hover:opacity-75 transition-opacity duration-200" aria-label="Go back">
               <ArrowLeftIcon />
             </Link>
@@ -533,7 +533,7 @@ export default function LeaseDetails() {
         <div className="w-full max-w-[390px] mx-auto">
           <div className="absolute inset-0 bg-[#FBF5DA]"></div>
           <div className="relative min-h-screen mobile-full-height flex flex-col">
-            <div className="h-[124px]"></div>
+            <div className="h-[85px]"></div>
             
             {/* Scrollable Form Content */}
             <div className="flex-1 overflow-y-auto px-5" style={{paddingBottom: '20px'}}>

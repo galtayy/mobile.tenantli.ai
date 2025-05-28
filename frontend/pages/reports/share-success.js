@@ -159,9 +159,9 @@ export default function ShareSuccess() {
       <div className="w-full h-[100px]"></div>
       
       {/* Success Illustration */}
-      <div className="w-[300px] h-[180px] mx-auto mt-5">
+      <div className="w-[300px] h-[180px] ml-[-20px] mt-5">
         <img 
-          src="/images/reportsuccess.png" 
+          src="/images/reportsend.svg" 
           alt="Success" 
           className="w-full h-full object-contain"
         />

@@ -110,7 +110,7 @@ export default function VerificationSuccess() {
               <div className="w-full h-full flex items-center justify-center">
                 <div className="relative" style={{ transform: 'scale(1) translateX(6px)' }}>
                   <img 
-                    src="/images/verification-success.png" 
+                    src="/images/done.svg" 
                     alt="Success" 
                     className="w-[190px] h-[190px]"
                     style={{ 

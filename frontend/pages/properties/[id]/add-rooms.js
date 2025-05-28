@@ -1072,8 +1072,8 @@ export default function AddRooms() {
       
       <div className="relative min-h-screen mobile-full-height w-full font-['Nunito'] overflow-hidden">
         {/* Header */}
-        <div className="absolute top-0 w-full bg-[#FBF5DA] z-10">
-          <div className="flex flex-row items-center px-[20px] pt-[60px] pb-[20px] relative">
+        <div className="fixed top-0 w-full bg-[#FBF5DA] z-20">
+          <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
             <button 
               className="flex items-center relative z-10 hover:opacity-75 transition-opacity duration-200"
               onClick={async () => {
@@ -1131,7 +1131,7 @@ export default function AddRooms() {
         <div className="w-full max-w-[390px] mx-auto">
           <div className="absolute inset-0 bg-[#FBF5DA]"></div>
           <div className="relative min-h-screen mobile-full-height flex flex-col">
-            <div className="h-[120px]"></div>
+            <div className="h-[85px]"></div>
             
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto px-5">

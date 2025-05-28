@@ -1221,7 +1221,7 @@ export default function MoveOutRoom() {
                 className="box-border flex flex-col items-center justify-center w-full h-[99px] mt-4 bg-white border border-dashed border-[#D1E7D5] rounded-[16px] hover:bg-gray-50 hover:border-[#55A363] transition-all duration-200 active:scale-98"
               >
                 <div className="flex flex-col items-center justify-center gap-2 py-[14px]">
-                  {<img src="/images/iconss/camera.png"/>}
+                  {<img src="/images/iconss/frame.svg"/>}
                   <p className="font-bold text-[14px] leading-[19px] text-center text-[#515964]">
                     Take Photo & Add From Gallery
                   </p>

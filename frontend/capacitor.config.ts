@@ -6,8 +6,12 @@ const config: CapacitorConfig = {
   webDir: 'out',
   server: {
     androidScheme: 'https',
+    iosScheme: 'https',
     hostname: 'mobile.tenantli.ai',
     url: 'https://mobile.tenantli.ai'
+  },
+  ios: {
+    contentInset: 'always'
   }
 };
 

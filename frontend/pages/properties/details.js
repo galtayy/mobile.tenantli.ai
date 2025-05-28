@@ -25,7 +25,7 @@ const ArrowRightIcon = () => (
 // Property Icon component
 const PropertyIcon = () => (
   <img 
-    src="/images/home.png" 
+    src="/images/home.svg" 
     alt="Property" 
     width="45" 
     height="45" 
@@ -36,7 +36,7 @@ const PropertyIcon = () => (
 // Calendar Icon component
 const CalendarIcon = () => (
   <img 
-    src="/images/lease.png" 
+    src="/images/lease.svg" 
     alt="Calendar" 
     width="45" 
     height="45" 
@@ -47,7 +47,7 @@ const CalendarIcon = () => (
 // Activity Icon component
 const ActivityIcon = () => (
   <img 
-    src="/images/walkthrough.png" 
+    src="/images/completed.svg" 
     alt="Activity" 
     width="45" 
     height="45" 
@@ -58,7 +58,7 @@ const ActivityIcon = () => (
 // Completed Icon component
 const CompletedIcon = () => (
   <img 
-    src="/images/walkthrough.png" 
+    src="/images/completed.svg" 
     alt="Walkthrough" 
     width="45" 
     height="45" 

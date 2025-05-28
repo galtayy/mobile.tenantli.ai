@@ -252,7 +252,7 @@ export default function ConfigureRoom() {
   return (
     <>
       <Head>
-        <title>{isReadOnly ? 'View Room' : (returnUrl?.includes('/summary') ? 'Edit Room' : 'Configure Room')} - tenantli</title>
+        <title>{isReadOnly ? 'View Room' : (returnUrl?.includes('/summary') ? 'Edit Room' : 'Room Name')} - tenantli</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="theme-color" content="#FBF5DA" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -336,8 +336,8 @@ export default function ConfigureRoom() {
       
       <div className="relative min-h-screen mobile-full-height w-full font-['Nunito'] overflow-hidden">
         {/* Header */}
-        <div className="absolute top-0 w-full bg-[#FBF5DA] z-10">
-          <div className="flex flex-row items-center px-[20px] pt-[60px] pb-[20px] relative">
+        <div className="fixed top-0 w-full bg-[#FBF5DA] z-20">
+          <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
             {!returnUrl?.includes('/summary') && (
               <Link 
                 href={id ? `/properties/${id}/add-rooms` : '/properties'}
@@ -348,7 +348,7 @@ export default function ConfigureRoom() {
               </Link>
             )}
             <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
-              {isReadOnly ? 'View Room' : (returnUrl?.includes('/summary') ? 'Edit Room' : 'Configure Room')}
+              {isReadOnly ? 'View Room' : (returnUrl?.includes('/summary') ? 'Edit Room' : 'Room Name')}
             </h1>
           </div>
         </div>
@@ -357,7 +357,7 @@ export default function ConfigureRoom() {
         <div className="w-full max-w-[390px] mx-auto">
           <div className="absolute inset-0 bg-[#FBF5DA]"></div>
           <div className="relative min-h-screen mobile-full-height flex flex-col">
-            <div className="h-[120px]"></div>
+            <div className="h-[85px]"></div>
             
             {/* Main Content */}
             <div className="flex-1 px-5">

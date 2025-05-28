@@ -227,7 +227,7 @@ export default function EmailVerification() {
           <div className="relative h-[180px] w-[180px] flex items-center justify-center">
             <div className="absolute w-[180px] h-[180px] bg-white rounded-full shadow-sm overflow-hidden">
               <img 
-                src="/images/email-verification.png" 
+                src="/images/confirmmail.svg" 
                 alt="Email verification" 
                 className="absolute w[200px] h[100px] left[15px] top-[0px] transform rotate-[0deg]"
               />            

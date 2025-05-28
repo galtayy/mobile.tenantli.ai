@@ -28,6 +28,8 @@ export default function Home() {
   const [recentActivity, setRecentActivity] = useState([]);
   const [properties, setProperties] = useState([]);
   const [showSideMenu, setShowSideMenu] = useState(false); // Default olarak kapalı
+  const [isMenuAnimating, setIsMenuAnimating] = useState(false);
+  
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletePropertyId, setDeletePropertyId] = useState(null);
@@ -69,11 +71,22 @@ export default function Home() {
     };
   }, [bottomSheetRef, showBottomSheet]);
   
-  // Handle menu closing with AnimatePresence
+  // Handle menu opening
+  const openMenu = () => {
+    setIsMenuAnimating(true);
+    // DOM'a ekledikten sonra animasyonu başlat
+    setTimeout(() => {
+      setShowSideMenu(true);
+    }, 10);
+  };
+
+  // Handle menu closing with animation
   const closeMenu = () => {
-    // With AnimatePresence, we can simply set the state directly
-    // The exit animation will be handled automatically
     setShowSideMenu(false);
+    // Menu'yu 500ms sonra DOM'dan kaldır (animasyon tamamlandığında)
+    setTimeout(() => {
+      setIsMenuAnimating(false);
+    }, 500);
   };
 
   useEffect(() => {
@@ -360,48 +373,40 @@ export default function Home() {
       <div className="fixed inset-0 bg-[#FBF5DA]"></div>
       <div className="relative min-h-screen mobile-full-height w-full font-['Nunito'] overflow-hidden flex flex-col bg-[#FBF5DA]">
         {/* Side Menu */}
-      <AnimatePresence>
-        {showSideMenu && (
+        {(showSideMenu || isMenuAnimating) && (
           <>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-              className="fixed inset-0 bg-black z-30" 
+            <div 
+              className={`fixed inset-0 bg-black z-[90] transition-all duration-500 ease-out ${showSideMenu ? 'bg-opacity-50' : 'bg-opacity-0'}`}
               onClick={closeMenu}
             />
-            <motion.div 
+            <div 
               ref={sideMenuRef}
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ 
-                type: "spring", 
-                stiffness: 400, 
-                damping: 40,
-                duration: 0.5
-              }}
-              className={`fixed top-0 left-0 h-full w-[280px] bg-[#F5F6F8] z-40`}
+              className={`fixed top-0 left-0 h-full w-full max-w-[390px] bg-[#F5F6F8] z-[100] transform transition-all duration-500 ease-out ${showSideMenu ? 'translate-x-0' : '-translate-x-full'}`}
               style={{
-                borderRadius: '0px',
-                position: 'fixed',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+                transformOrigin: 'left center',
+                transform: showSideMenu ? 'translateX(0)' : 'translateX(-100%)',
+                opacity: showSideMenu ? 1 : 0
               }}
             >
             {/* Header */}
-            <div className="w-full h-[65px] mt-[40px] sm:mt-8">
-              <div className="flex flex-row justify-center items-center px-4 w-full h-[65px] relative">
+            <div className="w-full bg-[#F5F6F8]" style={{ paddingTop: 'env(safe-area-inset-top, 40px)' }}>
+              <div className="flex flex-row justify-center items-center px-[20px] h-[65px] relative">
                 <button 
-                  className="absolute left-[20px] top-[50%] transform -translate-y-1/2"
-                  onClick={closeMenu}
-                  aria-label="Go back"
+                  className="absolute left-[16px] top-[12px] w-[48px] h-[48px] flex items-center justify-center z-50 bg-transparent"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeMenu();
+                  }}
+                  style={{ touchAction: 'manipulation' }}
+                  aria-label="Close menu"
                 >
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 19L8 12L15 5" stroke="#2E3642" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 19L8 12L15 5" stroke="#2E3642" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </button>
-                <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420]">
+                <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
                   Menu
                 </h1>
               </div>
@@ -412,8 +417,8 @@ export default function Home() {
               {/* Move Out Option */}
               <div className="w-full h-[64px] mb-0 relative">
                 <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px]">
-                  <div className="w-[40px] h-[40px] flex items-center justify-center rounded-[225px]">
-                    <img src="/images/iconss/moveout.png" alt="Move out" className="w-[40px] h-[40px]" />
+                  <div className="w-[40px] h-[40px] flex items-center justify-center">
+                    <img src="/images/iconss/moveout.svg" alt="Move out" className="w-[40px] h-[40px]" />
                   </div>
                   <Link href="/move-out" className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
                     Move out
@@ -425,8 +430,8 @@ export default function Home() {
               {/* Password Change Option */}
               <div className="w-full h-[64px] mb-0 relative">
                 <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px]">
-                  <div className="w-[40px] h-[40px] flex items-center justify-center rounded-[225px]">
-                    <img src="/images/iconss/passwordchange.png" alt="Password Change" className="w-[40px] h-[40px]" />
+                  <div className="w-[40px] h-[40px] flex items-center justify-center">
+                    <img src="/images/iconss/key.svg" alt="Password Change" className="w-[40px] h-[40px]" />
                   </div>
                   <Link href="/profile/change-password" className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
                     Password Change
@@ -438,8 +443,8 @@ export default function Home() {
               {/* Support Option */}
               <div className="w-full h-[64px] mb-0 relative">
                 <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px]">
-                  <div className="w-[40px] h-[40px] flex items-center justify-center rounded-[225px]">
-                    <img src="/images/iconss/24support.png" alt="Support" className="w-[22px] h-[22px]" />
+                  <div className="w-[40px] h-[40px] flex items-center justify-center">
+                    <img src="/images/iconss/support.svg" alt="Support" className="w-[22px] h-[22px]" />
                   </div>
                   <button 
                     onClick={() => window.location.href = 'mailto:support@tenantli.ai'}
@@ -454,8 +459,8 @@ export default function Home() {
               {/* Logout Option */}
               <div className="w-full h-[64px] mb-0 relative">
                 <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px]">
-                  <div className="w-[40px] h-[40px] flex items-center justify-center rounded-[225px]">
-                    <img src="/images/iconss/logout.png" alt="Logout" className="w-[22px] h-[22px]" />
+                  <div className="w-[40px] h-[40px] flex items-center justify-center">
+                    <img src="/images/iconss/logout.svg" alt="Logout" className="w-[22px] h-[22px]" />
                   </div>
                   <button 
                     onClick={() => {
@@ -469,29 +474,32 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            </motion.div>
+            </div>
           </>
         )}
-      </AnimatePresence>
         
         {/* Fixed Header */}
         <div className="fixed top-0 w-full bg-[#FBF5DA] z-20">
-          <div className="flex flex-row items-center px-[20px] pt-[60px] pb-[20px] relative safe-area-top">
+          <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
             <button 
-              onClick={() => setShowSideMenu(true)}
+              onClick={openMenu}
               aria-label="Open menu"
-              className="relative z-10"
+              className="relative z-50 w-10 h-10 flex items-center justify-center"
             >
-              <MenuIcon />
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 12H21" stroke="#1C2C40" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 6H21" stroke="#1C2C40" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M3 18H21" stroke="#1C2C40" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </button>
-            <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+            <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto pointer-events-none">
               My Home
             </h1>
           </div>
         </div>
         
         {/* Content Container with spacer */}
-        <div className="flex-1 overflow-y-auto" style={{paddingTop: '120px', paddingBottom: '100px'}}>
+        <div className="flex-1 overflow-y-auto" style={{paddingTop: '85px', paddingBottom: '100px'}}>
           <div className="w-full max-w-screen-lg mx-auto flex flex-col items-center px-4 sm:px-6 lg:px-8">
           {properties.length === 0 ? (
             // Empty state when no properties exist
@@ -545,7 +553,7 @@ export default function Home() {
                       <div className="flex items-center">
                         <div className="mr-4 w-[45px] h-[45px] flex items-center justify-center">
                           <img 
-                            src="/images/home.png" 
+                            src="/images/home.svg" 
                             alt="Property" 
                             width="45" 
                             height="45" 
@@ -573,7 +581,7 @@ export default function Home() {
                       <div className="flex items-center">
                         <div className="mr-4 w-[45px] h-[45px] flex items-center justify-center">
                           <img 
-                            src="/images/lease.png" 
+                            src="/images/lease.svg" 
                             alt="Calendar" 
                             width="45" 
                             height="45" 
@@ -627,7 +635,7 @@ export default function Home() {
                         <div className="flex items-center">
                           <div className="mr-4 w-[45px] h-[45px] flex items-center justify-center">
                             <img 
-                              src="/images/walkthrough.png" 
+                              src="/images/completed.svg" 
                               alt="Walkthrough" 
                               width="45" 
                               height="45" 
@@ -658,23 +666,25 @@ export default function Home() {
         
         {/* Fixed Add Property Button - Only show if no properties exist */}
         {properties.length === 0 && (
-          <div className="fixed bottom-0 left-0 right-0 px-5 pb-4 bg-[#FBF5DA] z-10">
-            <div className="safe-area-bottom">
-              <button
-                onClick={() => router.push('/properties/addunit')}
-                className="w-full h-[56px] flex justify-center items-center bg-[#1C2C40] rounded-[16px] hover:bg-[#243242] active:bg-[#0C1322] transition-colors duration-200"
-              >
-                <span className="font-bold text-[16px] text-[#D1E7E2]">
-                  Add New Home
-                </span>
-              </button>
-              
-              <button 
-                className="w-full text-center font-semibold text-[#0B1420] text-sm mt-4"
-                onClick={() => setShowBottomSheet(true)}
-              >
-                Why Add Your Home?
-              </button>
+          <div className="fixed bottom-0 left-0 right-0 bg-[#FBF5DA] z-10">
+            <div className="w-full max-w-[390px] mx-auto px-5 pb-4">
+              <div className="safe-area-bottom">
+                <button
+                  onClick={() => router.push('/properties/addunit')}
+                  className="w-full h-[56px] flex justify-center items-center bg-[#1C2C40] rounded-[16px] hover:bg-[#243242] active:bg-[#0C1322] transition-colors duration-200"
+                >
+                  <span className="font-bold text-[16px] text-[#D1E7E2]">
+                    Add New Home
+                  </span>
+                </button>
+                
+                <button 
+                  className="w-full text-center font-semibold text-[#0B1420] text-sm mt-4"
+                  onClick={() => setShowBottomSheet(true)}
+                >
+                  Why Add Your Home?
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -701,7 +711,8 @@ export default function Home() {
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="fixed bottom-0 left-0 right-0 w-full bg-white rounded-t-[16px] z-50 shadow-2xl"
+                className="fixed bottom-0 left-0 right-0 bg-white rounded-t-[16px] z-50 shadow-2xl"
+                style={{ maxWidth: '390px', margin: '0 auto' }}
               >
                 {/* Drag handle */}
                 <div className="flex flex-col items-center p-2.5 w-full">
@@ -715,7 +726,7 @@ export default function Home() {
                     <div className="w-20 h-20 relative bg-[#FFF6ED] rounded-full flex items-center justify-center overflow-hidden">
                       {/* PNG görselinizi buraya ekleyebilirsiniz */}
                       <img 
-                        src="/images/home.png"
+                        src="/images/home.svg"
                         className="w-12 h-12 object-contain"
                         onError={(e) => {
                           // Fallback if image doesn't load

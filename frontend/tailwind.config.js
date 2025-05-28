@@ -31,10 +31,19 @@ module.exports = {
         'safe-left': 'env(safe-area-inset-left)',
         'safe-right': 'env(safe-area-inset-right)',
       },
+      keyframes: {
+        bgSlide: {
+          '0%': { backgroundPosition: '0% 50%' },
+          '100%': { backgroundPosition: '100% 50%' },
+        },
+        animation: {
+          bgSlide: 'bgSlide 1s ease-in-out forwards',
+        },
+      }
     },
   },
   plugins: [
-    function({ addUtilities }) {
+    function ({ addUtilities }) {
       const newUtilities = {
         '.touch-manipulation': {
           'touch-action': 'manipulation',

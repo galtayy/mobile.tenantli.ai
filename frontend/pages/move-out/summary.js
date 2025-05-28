@@ -468,27 +468,24 @@ export default function MoveOutSummary() {
         `}</style>
       </Head>
       
-      {/* Header with status bar */}
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <div className="h-[40px] safe-area-top bg-[#FBF5DA]" />
-        <div className="h-[65px] bg-[#FBF5DA] shadow-sm">
-          <div className="flex items-center justify-center relative h-full px-4">
-            <Link
-              href={`/move-out/rooms?propertyId=${propertyId}`}
-              className="absolute left-4 p-2 hover:bg-black/5 rounded-lg transition-colors duration-200"
-              aria-label="Go back"
-            >
-              <ArrowLeftIcon />
-            </Link>
-            <h1 className="text-[18px] font-semibold text-[#0B1420]">
-              Move-Out Summary
-            </h1>
-          </div>
+      {/* Header */}
+      <div className="fixed top-0 w-full max-w-[390px] bg-[#FBF5DA] z-20">
+        <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
+          <button 
+            className="relative z-50 w-10 h-10 flex items-center justify-center"
+            onClick={() => router.back()}
+            aria-label="Go back"
+          >
+            <ArrowLeftIcon />
+          </button>
+          <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+            Move-Out Summary
+          </h1>
         </div>
       </div>
       
       {/* Scrollable content */}
-      <div className="flex flex-col min-h-screen pt-[105px] pb-[100px]">
+      <div className="flex flex-col min-h-screen pb-[100px]" style={{ paddingTop: '85px' }}>
         <div className="flex-1 px-4 py-5">
           <div className="max-w-[400px] mx-auto sm:max-w-2xl">
             {/* Summary Card */}
@@ -699,7 +696,7 @@ export default function MoveOutSummary() {
               className="w-full h-14 bg-[#1C2C40] text-white font-semibold rounded-2xl shadow-sm hover:bg-[#283c56] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 touch-manipulation focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1C2C40]"
               aria-label={isReportAlreadySent ? 'Move-out report already shared' : (isSubmitting ? 'Creating move-out report...' : 'Create & Share Report')}
             >
-              {isReportAlreadySent ? 'Move-out Report Already Shared' : (isSubmitting ? 'Creating Report...' : 'Create & Share Report')}
+              {isReportAlreadySent ? 'Move-out Report Already Shared' : (isSubmitting ? 'Creating Report...' : 'Share Walkthrough')}
             </button>
           </form>
         </div>

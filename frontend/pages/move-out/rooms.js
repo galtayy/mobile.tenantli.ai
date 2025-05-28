@@ -369,19 +369,26 @@ export default function MoveOutRooms() {
       <div className="fixed inset-0 bg-[#FBF5DA]"></div>
       
       <div className="relative min-h-screen mobile-full-height w-full font-['Nunito'] overflow-hidden">
-        {/* Fixed Header */}
-        <div className="fixed top-0 w-full bg-[#FBF5DA] z-20">
-          <div className="flex flex-row items-center px-[20px] pt-[60px] pb-[20px] relative safe-area-top">
-            <Link 
-              href="/"
-              className="flex items-center relative z-10 hover:opacity-75 transition-opacity duration-200"
-              aria-label="Go back"
-            >
-              <BackIcon />
-            </Link>
-            <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
-              Room Selection
-            </h1>
+        {/* Header */}
+        <div className="fixed top-0 left-0 right-0 bg-[#FBF5DA] z-20">
+          <div className="w-full max-w-[390px] mx-auto">
+            <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
+              <button 
+                className="relative z-50 w-10 h-10 flex items-center justify-center"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Back button clicked in rooms page - going to dashboard');
+                  router.push('/');
+                }}
+                aria-label="Go back"
+              >
+                <BackIcon />
+              </button>
+              <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+                Room Selection
+              </h1>
+            </div>
           </div>
         </div>
         
@@ -396,11 +403,8 @@ export default function MoveOutRooms() {
         <div className="w-full max-w-[390px] mx-auto">
           <div className="absolute inset-0 bg-[#FBF5DA]"></div>
           <div className="relative min-h-screen mobile-full-height flex flex-col">
-            {/* Header Spacer */}
-            <div className="h-[124px]"></div>
-            
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto px-5 scroll-y" style={{paddingBottom: '100px'}}>
+            <div className="flex-1 overflow-y-auto px-5 scroll-y" style={{paddingTop: '85px', paddingBottom: '100px'}}>
               {/* Property Name */}
               <h2 className="font-bold text-[18px] text-[#0B1420] mt-2 mb-6">
                 {property?.address || 'Property'}
