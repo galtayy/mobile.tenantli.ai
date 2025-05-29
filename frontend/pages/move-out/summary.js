@@ -334,7 +334,11 @@ export default function MoveOutSummary() {
             id: room.id,
             name: room.name,
             type: room.type,
-            notes: room.moveOutNotes || []
+            notes: room.moveOutNotes || [],
+            moveOutNotes: room.moveOutNotes || [],
+            moveOutDate: room.moveOutDate,
+            moveOutCompleted: room.moveOutCompleted,
+            moveOutPhotoCount: room.moveOutPhotoCount || 0
           }))
         };
         
@@ -472,7 +476,7 @@ export default function MoveOutSummary() {
       <div className="fixed top-0 w-full max-w-[390px] bg-[#FBF5DA] z-20">
         <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
           <button 
-            className="relative z-50 w-10 h-10 flex items-center justify-center"
+            className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
             onClick={() => router.back()}
             aria-label="Go back"
           >
@@ -530,7 +534,27 @@ export default function MoveOutSummary() {
                     Move out Date
                   </span>
                   <span className="text-sm font-bold text-[#1C2C40] text-right flex-1 ml-4">
-                    {formatDate(propertyDetails.contract_end_date)}
+                    {(() => {
+                      // Find the most recent move-out date from rooms
+                      let latestMoveOutDate = null;
+                      if (rooms && rooms.length > 0) {
+                        rooms.forEach(room => {
+                          if (room.moveOutDate) {
+                            const roomDate = new Date(room.moveOutDate);
+                            if (!latestMoveOutDate || roomDate > latestMoveOutDate) {
+                              latestMoveOutDate = roomDate;
+                            }
+                          }
+                        });
+                      }
+                      
+                      if (latestMoveOutDate) {
+                        return formatDate(latestMoveOutDate.toISOString());
+                      }
+                      
+                      // If no move-out date found, show today's date
+                      return formatDate(new Date().toISOString());
+                    })()}
                   </span>
                 </div>
 

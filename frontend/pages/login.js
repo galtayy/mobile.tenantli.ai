@@ -145,7 +145,7 @@ export default function Login() {
           router.push('/');
           return;
         }
-        setErrors({ ...newErrors, general: 'Invalid email or password' });
+        setErrors({ ...newErrors, general: 'Hmm, we couldn’t log you in. Check your info and try again.' });
       }
     } catch (error) {
       // Backend çalışmadığında demo kullanıcı için
@@ -208,21 +208,32 @@ export default function Login() {
         className="relative w-full min-h-screen mobile-full-height font-['Nunito'] overflow-hidden"
         style={{ maxWidth: '100%', margin: '0 auto' }}
       >
-        {/* Status Bar Space */}
-        <div className="h-10 w-full sm:h-0"></div>
-        
         {/* Header */}
-        <div className="absolute w-full h-[65px] left-0 top-[40px] sm:top-8 flex flex-row justify-center items-center px-4">
-          <Link href="/welcome" className="absolute left-[20px] top-1/2 -translate-y-1/2">
-            <ArrowLeftIcon />
-          </Link>
-          <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420]">
-            Login
-          </h1>
+        <div className="fixed top-0 left-0 right-0 bg-[#FBF5DA] z-20">
+          <div className="w-full max-w-[390px] mx-auto">
+            <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
+              <button 
+                className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push('/welcome');
+                }}
+                aria-label="Go back"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 19L8 12L15 5" stroke="#2E3642" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+                Login
+              </h1>
+            </div>
+          </div>
         </div>
         
         {/* Content Container */}
-        <div className="w-full flex flex-col items-center px-[5%] pt-[121px] sm:pt-[100px]">
+        <div className="w-full flex flex-col items-center px-[5%] pt-[85px]">
           {/* Title + Subtext */}
           <div className="w-full max-w-[350px] sm:max-w-[400px] lg:max-w-[420px] mb-4">
             <h2 className="font-bold text-[16px] leading-[22px] text-[#0B1420]">

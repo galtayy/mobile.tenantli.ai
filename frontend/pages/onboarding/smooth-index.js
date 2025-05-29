@@ -128,7 +128,7 @@ export default function SmoothOnboarding() {
             </div>
             
             {/* Page indicators */}
-            <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 top-[680px]">
+            <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
               <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
               <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
               <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
@@ -179,7 +179,7 @@ export default function SmoothOnboarding() {
             </div>
             
             {/* Page indicators */}
-            <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 top-[680px]">
+            <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
               <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
               <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
               <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>

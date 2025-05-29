@@ -393,7 +393,7 @@ export default function Home() {
             <div className="w-full bg-[#F5F6F8]" style={{ paddingTop: 'env(safe-area-inset-top, 40px)' }}>
               <div className="flex flex-row justify-center items-center px-[20px] h-[65px] relative">
                 <button 
-                  className="absolute left-[16px] top-[12px] w-[48px] h-[48px] flex items-center justify-center z-50 bg-transparent"
+                  className="absolute left-[16px] top-[12px] w-[48px] h-[48px] flex items-center justify-center z-50 bg-transparent -ml-2"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -427,14 +427,15 @@ export default function Home() {
                 <div className="w-full h-0 border-b border-[#ECF0F5]"></div>
               </div>
               
-              {/* Password Change Option */}
+              {/* Personal Details Option */}
               <div className="w-full h-[64px] mb-0 relative">
                 <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px]">
                   <div className="w-[40px] h-[40px] flex items-center justify-center">
-                    <img src="/images/iconss/key.svg" alt="Password Change" className="w-[40px] h-[40px]" />
+                    {/* PLACEHOLDER FOR PERSONAL DETAILS ICON - TO BE PROVIDED BY USER */}
+                    <img src="/images/iconss/personaldetails.svg" alt="Personal Details" className="w-[40px] h-[40px]" />
                   </div>
-                  <Link href="/profile/change-password" className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
-                    Password Change
+                  <Link href="/profile" className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
+                    Profile
                   </Link>
                 </div>
                 <div className="w-full h-0 border-b border-[#ECF0F5]"></div>
@@ -452,6 +453,20 @@ export default function Home() {
                   >
                     Support
                   </button>
+                </div>
+                <div className="w-full h-0 border-b border-[#ECF0F5]"></div>
+              </div>
+              
+              {/* Settings Option */}
+              <div className="w-full h-[64px] mb-0 relative">
+                <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px]">
+                  <div className="w-[40px] h-[40px] flex items-center justify-center">
+                    {/* PLACEHOLDER FOR SETTINGS ICON - TO BE PROVIDED BY USER */}
+                   <img src="/images/iconss/settings.svg" alt="Settings" className="w-[40px] h-[40px]" />
+                  </div>
+                  <Link href="/profile/settings" className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
+                    Settings
+                  </Link>
                 </div>
                 <div className="w-full h-0 border-b border-[#ECF0F5]"></div>
               </div>
@@ -484,7 +499,7 @@ export default function Home() {
             <button 
               onClick={openMenu}
               aria-label="Open menu"
-              className="relative z-50 w-10 h-10 flex items-center justify-center"
+              className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3 12H21" stroke="#1C2C40" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>

@@ -471,24 +471,103 @@ export default function SharedMoveOutReport() {
                   </p>
                 </div>
                 
-                <div className="flex flex-col">
-                  <span className="text-[#515964] text-[12px]">{report.type === 'move-out' ? 'Move-out Date' : 'Move-in Date'}:</span>
-                  <p className="font-medium text-[#0B1420] text-[14px]">
-                    {report.contract_end_date 
-                      ? new Date(report.contract_end_date).toLocaleDateString('en-US', {
-                          day: 'numeric',
-                          month: 'long',
-                          year: 'numeric'
-                        })
-                      : 'Not specified'
-                    }
-                  </p>
-                </div>
+                {/* For move-out reports, show both operation date and scheduled date */}
+                {report.type === 'move-out' ? (
+                  <>
+                    {/* Move-out Operation Date */}
+                    <div className="flex flex-col">
+                      <span className="text-[#515964] text-[12px]">Move-out Performed:</span>
+                      <p className="font-medium text-[#0B1420] text-[14px]">
+                        {(() => {
+                          // Find the most recent move-out date from rooms
+                          let latestMoveOutDate = null;
+                          if (rooms && rooms.length > 0) {
+                            rooms.forEach(room => {
+                              if (room.moveOutDate) {
+                                const roomDate = new Date(room.moveOutDate);
+                                if (!latestMoveOutDate || roomDate > latestMoveOutDate) {
+                                  latestMoveOutDate = roomDate;
+                                }
+                              }
+                            });
+                          }
+                          
+                          if (latestMoveOutDate) {
+                            return latestMoveOutDate.toLocaleDateString('en-US', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            });
+                          }
+                          
+                          // Fallback to report creation date
+                          return report.created_at 
+                            ? new Date(report.created_at).toLocaleDateString('en-US', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })
+                            : 'Not specified';
+                        })()}
+                      </p>
+                    </div>
+                    
+                    {/* Scheduled Move-out Date */}
+                    <div className="flex flex-col">
+                      <span className="text-[#515964] text-[12px]">Scheduled Move-out:</span>
+                      <p className="font-medium text-[#0B1420] text-[14px]">
+                        {report.contract_end_date 
+                          ? new Date(report.contract_end_date).toLocaleDateString('en-US', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })
+                          : 'Not specified'
+                        }
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  /* For move-in reports, show move-in date */
+                  <div className="flex flex-col">
+                    <span className="text-[#515964] text-[12px]">Move-in Date:</span>
+                    <p className="font-medium text-[#0B1420] text-[14px]">
+                      {report.contract_start_date 
+                        ? new Date(report.contract_start_date).toLocaleDateString('en-US', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric'
+                          })
+                        : 'Not specified'
+                      }
+                    </p>
+                  </div>
+                )}
                 
                 <div className="flex flex-col">
                   <span className="text-[#515964] text-[12px]">Deposit Amount:</span>
                   <p className="font-medium text-[#0B1420] text-[14px]">
                     {report.deposit_amount ? `$${report.deposit_amount}` : 'Not specified'}
+                  </p>
+                </div>
+                
+                <div className="flex flex-col">
+                  <span className="text-[#515964] text-[12px]">Report Created:</span>
+                  <p className="font-medium text-[#0B1420] text-[14px]">
+                    {report.created_at 
+                      ? new Date(report.created_at).toLocaleDateString('en-US', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
+                      : 'Not specified'
+                    }
                   </p>
                 </div>
               </div>

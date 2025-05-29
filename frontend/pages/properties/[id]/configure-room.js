@@ -342,7 +342,7 @@ export default function ConfigureRoom() {
               {!returnUrl?.includes('/summary') && (
                 <Link 
                   href={id ? `/properties/${id}/add-rooms` : '/properties'}
-                  className="relative z-50 w-10 h-10 flex items-center justify-center"
+                  className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
                   aria-label="Go back"
                   onClick={(e) => {
                     e.stopPropagation();

@@ -20,6 +20,7 @@ export default function VerificationSuccess() {
   const router = useRouter();
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [confettiActive, setConfettiActive] = useState(true);
+  const [verificationType, setVerificationType] = useState('registration');
   
   // Ekran boyutlarını alma
   useEffect(() => {
@@ -51,6 +52,15 @@ export default function VerificationSuccess() {
       localStorage.setItem('theme', 'light');
     }
   }, []);
+
+  // Check verification type from query params
+  useEffect(() => {
+    if (router.isReady) {
+      if (router.query.type === 'email-change') {
+        setVerificationType('email-change');
+      }
+    }
+  }, [router.isReady, router.query]);
 
   // Set confetti active when component mounts and stop after 6 seconds
   useEffect(() => {
@@ -136,7 +146,7 @@ export default function VerificationSuccess() {
           {/* Text content */}
           <div className="flex flex-col items-center gap-2 mt-10 max-w-[296px]">
             <h2 className="font-bold text-[18px] leading-[25px] text-center text-[#0B1420]">
-              You're all set!
+              {verificationType === 'email-change' ? 'Email Updated!' : "You're all set!"}
             </h2>
             <p className="font-semibold text-[14px] leading-[19px] text-center text-[#515964]">
               We’ve verified your email,

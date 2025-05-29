@@ -137,7 +137,7 @@ export default function NewPassword() {
     }
     
     if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Those passwords don’t match.';
       hasError = true;
     }
     
@@ -258,29 +258,36 @@ export default function NewPassword() {
         className="min-h-screen mobile-full-height font-['Nunito'] relative w-full overflow-hidden" 
         style={{ maxWidth: '100%', margin: '0 auto' }}
       >
-        {/* Status Bar */}
-        <div className="h-10 w-full sm:h-0"></div>
-        
         {/* Header */}
-        <div className="absolute w-full h-[65px] left-0 top-[40px] sm:top-8 flex flex-row justify-center items-center px-4">
-          <Link href="/password-reset/verify" 
-            className="absolute left-[20px] top-1/2 -translate-y-1/2"
-            onClick={() => {
-              // When navigating back, keep the email but remove the token
-              if (typeof window !== 'undefined') {
-                sessionStorage.removeItem('resetToken');
-              }
-            }}
-          >
-            <ArrowLeftIcon />
-          </Link>
-          <h1 className="font-semibold text-lg text-center text-[#0B1420]">
-            Reset Your Password
-          </h1>
+        <div className="fixed top-0 left-0 right-0 bg-[#FBF5DA] z-20">
+          <div className="w-full max-w-[390px] mx-auto">
+            <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
+              <button 
+                className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // When navigating back, keep the email but remove the token
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.removeItem('resetToken');
+                  }
+                  router.push('/password-reset/verify?email=' + encodeURIComponent(email));
+                }}
+                aria-label="Go back"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 19L8 12L15 5" stroke="#2E3642" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+                Reset Your Password
+              </h1>
+            </div>
+          </div>
         </div>
         
         {/* Content Container */}
-        <div className="w-full flex flex-col items-center px-[5%] pt-[121px] sm:pt-[100px]">
+        <div className="w-full flex flex-col items-center px-[5%]" style={{ paddingTop: '85px' }}>
           {/* General Error Message */}
           {errors.general && (
             <div className="w-full max-w-[350px] sm:max-w-[400px] lg:max-w-[420px] bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-6 flex items-center">

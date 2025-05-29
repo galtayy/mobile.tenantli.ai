@@ -231,7 +231,7 @@ export default function OnboardingFlow() {
               </div>
 
               {/* Page indicators */}
-              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 top-[680px]">
+              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
                 <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
                 <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
@@ -285,7 +285,7 @@ export default function OnboardingFlow() {
               </div>
 
               {/* Page indicators */}
-              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 top-[680px]">
+              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
                 <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
                 <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
                 <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
@@ -322,7 +322,7 @@ export default function OnboardingFlow() {
               <div
                 className="absolute top-[105px] left-0 right-0 flex justify-center items-center"
               >
-                <div className="relative w-full max-w-[360px] h-[360px] mx-auto flex items-center justify-center">
+                <div className="relative w-full max-w-[400px] h-[400px] mx-auto flex items-center justify-center">
                   <img
                     src="/images/onboarding3.png"
                     alt="Step 3 Illustration"
@@ -352,7 +352,7 @@ export default function OnboardingFlow() {
               </div>
 
               {/* Page indicators */}
-              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 top-[680px]">
+              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
                 <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
                 <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
                 <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
@@ -430,7 +430,7 @@ export default function OnboardingFlow() {
               </div>
 
               {/* Page indicators */}
-              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 top-[680px]">
+              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
                 <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
                 <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
                 <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
@@ -489,7 +489,7 @@ export default function OnboardingFlow() {
               </div>
 
               {/* Page indicators */}
-              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 top-[680px]">
+              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
                 <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
                 <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
                 <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>

@@ -17,6 +17,8 @@ exports.getProfile = async (req, res) => {
       id: user.id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
+      role: user.role,
       created_at: user.created_at,
       updated_at: user.updated_at
     });
@@ -35,7 +37,7 @@ exports.updateProfile = async (req, res) => {
     }
     
     const userId = req.user.id;
-    const { name, email } = req.body;
+    const { name, email, phone, role } = req.body;
     
     // Email kullanımda mı kontrol et
     if (email) {
@@ -46,7 +48,7 @@ exports.updateProfile = async (req, res) => {
     }
     
     // Kullanıcı bilgilerini güncelle
-    const updated = await User.update(userId, { name, email });
+    const updated = await User.update(userId, { name, email, phone, role });
     
     if (!updated) {
       return res.status(400).json({ message: 'Profil güncellenemedi' });
@@ -61,6 +63,8 @@ exports.updateProfile = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        role: user.role,
         created_at: user.created_at,
         updated_at: user.updated_at
       }

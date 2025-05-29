@@ -96,4 +96,36 @@ router.post(
   authController.resetPassword
 );
 
+// Email değiştirme kimlik doğrulama
+router.post(
+  '/request-email-change-verification',
+  authMiddleware,
+  [
+    check('currentEmail', 'Geçerli bir e-posta giriniz').isEmail()
+  ],
+  authController.requestEmailChangeVerification
+);
+
+// Email değiştirme isteği
+router.post(
+  '/request-email-change',
+  authMiddleware,
+  [
+    check('newEmail', 'Geçerli bir e-posta giriniz').isEmail()
+  ],
+  authController.requestEmailChange
+);
+
+// Email değiştirme doğrulama
+router.post(
+  '/verify-email-change',
+  authMiddleware,
+  [
+    check('userId', 'User ID gereklidir').not().isEmpty(),
+    check('code', 'Doğrulama kodu gereklidir').isLength({ min: 4, max: 4 }),
+    check('newEmail', 'Geçerli bir e-posta giriniz').isEmail()
+  ],
+  authController.verifyEmailChange
+);
+
 module.exports = router;

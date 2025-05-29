@@ -212,21 +212,32 @@ export default function VerifyCode() {
         className="relative min-h-screen w-full font-['Nunito']" 
         style={{ backgroundColor: '#FBF5DA' }}
       >
-        {/* Safe area for status bar */}
-        <div className="h-10 w-full"></div>
-        
         {/* Header */}
-        <div className="w-full h-[65px] flex items-center justify-center p-5 bg-[#FBF5DA] relative">
-          <Link href="/password-reset" className="absolute left-[20px] top-1/2 -translate-y-1/2">
-            <ArrowLeftIcon />
-          </Link>
-          <h1 className="font-semibold text-[18px] text-center text-[#0B1420]">
-            Verify Code
-          </h1>
+        <div className="fixed top-0 left-0 right-0 bg-[#FBF5DA] z-20">
+          <div className="w-full max-w-[390px] mx-auto">
+            <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
+              <button 
+                className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push('/password-reset');
+                }}
+                aria-label="Go back"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 19L8 12L15 5" stroke="#2E3642" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+                Verify Code
+              </h1>
+            </div>
+          </div>
         </div>
         
         {/* Content Frame */}
-        <div className="flex flex-col items-center p-6 gap-6 mt-4">
+        <div className="flex flex-col items-center p-6 gap-6" style={{ paddingTop: '85px' }}>
           {/* Email envelope image */}
           <div className="relative h-[180px] w-[180px] flex items-center justify-center">
             <div className="absolute w-[180px] h-[180px] bg-white rounded-full shadow-sm overflow-hidden">

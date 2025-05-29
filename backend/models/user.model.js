@@ -50,7 +50,7 @@ class User {
   // ID ile kullanıcı bulma
   static async findById(id) {
     try {
-      const [rows] = await db.execute('SELECT id, name, email, created_at, updated_at FROM users WHERE id = ?', [id]);
+      const [rows] = await db.execute('SELECT id, name, email, phone, role, created_at, updated_at FROM users WHERE id = ?', [id]);
       return rows.length ? rows[0] : null;
     } catch (error) {
       throw error;
@@ -62,13 +62,15 @@ class User {
     try {
       const query = `
         UPDATE users 
-        SET name = ?, email = ?, updated_at = CURRENT_TIMESTAMP 
+        SET name = ?, email = ?, phone = ?, role = ?, updated_at = CURRENT_TIMESTAMP 
         WHERE id = ?
       `;
 
       const [result] = await db.execute(query, [
         userData.name,
         userData.email,
+        userData.phone,
+        userData.role,
         id
       ]);
 

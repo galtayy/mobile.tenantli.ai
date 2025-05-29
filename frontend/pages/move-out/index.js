@@ -133,7 +133,7 @@ export default function MoveOutProperties() {
         <div className="fixed top-0 w-full max-w-[390px] bg-[#FBF5DA] z-20">
           <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
             <button 
-              className="relative z-50 w-10 h-10 flex items-center justify-center"
+              className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
               onClick={() => router.push('/')}
               aria-label="Go back"
             >

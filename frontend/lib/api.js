@@ -652,6 +652,9 @@ export const apiService = {
     requestPasswordReset: (data) => publicApi.post('/api/auth/request-password-reset', data),
     verifyResetCode: (data) => publicApi.post('/api/auth/verify-reset-code', data),
     resetPassword: (data) => publicApi.post('/api/auth/reset-password', data),
+    requestEmailChangeVerification: (data) => api.post('/api/auth/request-email-change-verification', data),
+    requestEmailChange: (data) => api.post('/api/auth/request-email-change', data),
+    verifyEmailChange: (data) => api.post('/api/auth/verify-email-change', data),
   },
   
   // Shopping Cart operations

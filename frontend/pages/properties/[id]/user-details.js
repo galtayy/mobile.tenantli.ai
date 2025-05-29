@@ -97,6 +97,10 @@ export default function UserDetails() {
       // Pre-fill with user data if available
       setName(user.name || '');
       setEmail(user.email || '');
+      // Also load phone from user data
+      if (user.phone) {
+        setPhone(formatPhoneNumber(user.phone) || '');
+      }
     }
   }, [user, authLoading, router]);
   
@@ -326,6 +330,20 @@ export default function UserDetails() {
         localStorage.setItem(`property_${propertyID}_user_signature`, signature.preview);
       }
       
+      // If user doesn't have phone number in DB or it's different, update it
+      if (user && (!user.phone || user.phone !== phoneDigits)) {
+        try {
+          console.log('Updating user phone number in DB:', phoneDigits);
+          await apiService.user.updateProfile({
+            phone: phoneDigits
+          });
+          console.log('Phone number updated successfully');
+        } catch (updateError) {
+          console.error('Error updating phone number:', updateError);
+          // Continue even if phone update fails
+        }
+      }
+      
       // Navigate to summary page
       router.push({
         pathname: `/properties/${propertyID}/summary`,
@@ -401,7 +419,7 @@ export default function UserDetails() {
         <div className="w-full max-w-[390px] mx-auto">
           <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
             <button
-              className="relative z-50 w-10 h-10 flex items-center justify-center"
+              className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

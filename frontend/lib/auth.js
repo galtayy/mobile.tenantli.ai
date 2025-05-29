@@ -22,11 +22,14 @@ export function AuthProvider({ children }) {
 
   // Auth durumunu kontrol et
   useEffect(() => {
-    checkAuth();
+    const initAuth = async () => {
+      await checkAuth();
+    };
+    initAuth();
   }, []);
 
   // Token'ı kontrol et ve decode et
-  const checkAuth = () => {
+  const checkAuth = async () => {
     if (typeof window === 'undefined') {
       setLoading(false);
       return false;
@@ -44,17 +47,25 @@ export function AuthProvider({ children }) {
           return false;
         }
         
-        // Token geçerliyse kullanıcı bilgilerini ayarla
-        setUser(decoded.user);
+        // Token geçerliyse kullanıcı bilgilerini ayarla - fetch complete user data
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         
-        // Eğer doğrulama bekleniyorsa flag'i ayarla
-        if (decoded.user.needsVerification) {
-          setPendingVerification(true);
-        } else {
+        try {
+          // Fetch complete user data from API
+          const userResponse = await apiService.auth.getUser();
+          setUser(userResponse.data);
           setPendingVerification(false);
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+          // Fallback to JWT payload if API call fails
+          setUser(decoded.user);
+          if (decoded.user.needsVerification) {
+            setPendingVerification(true);
+          } else {
+            setPendingVerification(false);
+          }
         }
         
-        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         setLoading(false);
         return true;
       } catch (error) {
@@ -77,14 +88,14 @@ export function AuthProvider({ children }) {
       // Doğrulama gerekiyorsa
       if (response.data.tempToken && response.data.user.needsVerification) {
         localStorage.setItem('tempToken', response.data.tempToken);
-        const decoded = jwtDecode(response.data.tempToken);
-        setUser(decoded.user);
+        // Use the complete user data from response
+        setUser(response.data.user);
         setPendingVerification(true);
         setLoading(false);
         return { 
           success: false, 
           needsVerification: true,
-          userId: decoded.user.id,
+          userId: response.data.user.id,
           message: response.data.message
         };
       }
@@ -93,8 +104,8 @@ export function AuthProvider({ children }) {
         localStorage.setItem('token', response.data.token);
         api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
         
-        const decoded = jwtDecode(response.data.token);
-        setUser(decoded.user);
+        // Use the complete user data from response instead of just JWT payload
+        setUser(response.data.user);
         setPendingVerification(false);
         setLoading(false);
         
@@ -185,8 +196,8 @@ export function AuthProvider({ children }) {
         localStorage.setItem('token', response.data.token);
         api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
         
-        const decoded = jwtDecode(response.data.token);
-        setUser(decoded.user);
+        // Use the complete user data from response instead of just JWT payload
+        setUser(response.data.user);
         setPendingVerification(false);
         setLoading(false);
         

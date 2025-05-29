@@ -101,7 +101,7 @@ export default function Menu({ isOpen, onClose }) {
         <div className="w-full h-[65px] bg-[#F5F6F8]">
           <div className="flex flex-row justify-center items-center px-[20px] h-[65px] relative">
             <button 
-              className="absolute left-[24px]"
+              className="absolute left-[24px] -ml-2"
               onClick={handleClose}
               aria-label="Close menu"
             >

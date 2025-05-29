@@ -523,7 +523,7 @@ export default function LeaseDetails() {
             <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
               <Link 
                 href="/" 
-                className="relative z-50 w-10 h-10 flex items-center justify-center" 
+                className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2" 
                 aria-label="Go back"
                 onClick={(e) => {
                   e.stopPropagation();

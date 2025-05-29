@@ -6,6 +6,14 @@ import { apiService } from '../../lib/api';
 import { toast } from 'react-toastify';
 
 // SVG icons
+const PasswordChangeIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M5 8.33333V6.66667C5 3.90833 5.83333 1.66667 10 1.66667C14.1667 1.66667 15 3.90833 15 6.66667V8.33333" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M10 15.4167C10.9205 15.4167 11.6667 14.6705 11.6667 13.75C11.6667 12.8295 10.9205 12.0833 10 12.0833C9.07953 12.0833 8.33333 12.8295 8.33333 13.75C8.33333 14.6705 9.07953 15.4167 10 15.4167Z" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <path d="M14.1667 18.3333H5.83333C2.5 18.3333 1.66667 17.5 1.66667 14.1667V12.5C1.66667 9.16667 2.5 8.33333 5.83333 8.33333H14.1667C17.5 8.33333 18.3333 9.16667 18.3333 12.5V14.1667C18.3333 17.5 17.5 18.3333 14.1667 18.3333Z" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+  </svg>
+);
+
 const KeyIcon = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M16.4916 12.4416C14.7749 14.1499 12.3166 14.6749 10.1583 14.0083L6.2333 17.9166C5.9499 18.2083 5.3916 18.3833 4.9916 18.3249L3.1749 18.0749C2.5749 17.9916 2.0166 17.4249 1.9249 16.8249L1.6749 15.0083C1.6166 14.6083 1.8083 14.0499 2.0833 13.7666L6.0083 9.8499C5.3333 7.6833 5.8499 5.2249 7.5666 3.5166C10.0249 1.0583 14.0166 1.0583 16.4833 3.5166C18.9499 5.9749 18.9499 9.9833 16.4916 12.4416Z" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
@@ -126,7 +134,7 @@ export default function ChangePassword() {
       newErrors.confirmPassword = 'Please confirm your password';
       hasError = true;
     } else if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Those passwords don’t match.';
       hasError = true;
     }
     
@@ -230,30 +238,39 @@ export default function ChangePassword() {
         className="h-screen font-['Nunito'] relative w-full bg-[#FBF5DA] flex flex-col overflow-hidden" 
         style={{ maxWidth: '100%', margin: '0 auto' }}
       >
-        {/* Fixed Header */}
-        <div className="fixed top-0 w-full bg-[#FBF5DA] z-20">
-          <div className="flex flex-row items-center px-[20px] pt-[60px] pb-[20px] relative safe-area-top">
-            <button 
-              onClick={() => router.back()}
-              className="flex items-center relative z-10"
-            >
-              <ArrowLeftIcon />
-            </button>
-            <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
-              Change Your Password
-            </h1>
+        {/* Header */}
+        <div className="fixed top-0 left-0 right-0 bg-[#FBF5DA] z-20">
+          <div className="w-full max-w-[390px] mx-auto">
+            <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
+              <button 
+                className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.back();
+                }}
+                aria-label="Go back"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 19L8 12L15 5" stroke="#2E3642" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+                Change Your Password
+              </h1>
+            </div>
           </div>
         </div>
         
         {/* Scrollable Content */}
-        <div className="w-full flex-1 overflow-hidden mt-[120px]">
+        <div className="w-full flex-1 overflow-hidden mt-[85px]">
           <form id="changePasswordForm" className="px-5" onSubmit={handleSubmit}>
           
           {/* Current Password Input */}
           <div className={`flex flex-row items-center px-5 py-[18px] gap-2 bg-white border ${
             errors.currentPassword ? 'border-[#E95858]' : 'border-[#D1E7D5]'
           } rounded-2xl h-14 mt-6`}>
-            <KeyIcon />
+            <PasswordChangeIcon />
             <input
               id="currentPassword"
               name="currentPassword"

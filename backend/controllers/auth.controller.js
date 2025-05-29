@@ -115,7 +115,9 @@ exports.verifyEmail = async (req, res) => {
       user: {
         id: user.id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        phone: user.phone,
+        role: user.role
       }
     });
   } catch (error) {
@@ -214,6 +216,8 @@ exports.login = async (req, res) => {
           id: user.id,
           name: user.name,
           email: user.email,
+          phone: user.phone,
+          role: user.role,
           needsVerification: true
         },
         userId: user.id // Add userId to make it easily available for frontend
@@ -233,7 +237,9 @@ exports.login = async (req, res) => {
       user: {
         id: user.id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        phone: user.phone,
+        role: user.role
       }
     });
   } catch (error) {
@@ -257,6 +263,8 @@ exports.getUser = async (req, res) => {
       id: user.id,
       name: user.name,
       email: user.email,
+      phone: user.phone,
+      role: user.role,
       created_at: user.created_at,
       is_verified: isVerified
     });
@@ -547,6 +555,213 @@ exports.resetPassword = async (req, res) => {
     });
   } catch (error) {
     console.error('Password reset error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Request email change verification - send verification code to current email for identity confirmation
+exports.requestEmailChangeVerification = async (req, res) => {
+  try {
+    const { currentEmail } = req.body;
+    const userId = req.user.id;
+    
+    if (!currentEmail) {
+      return res.status(400).json({ message: 'Current email address is required' });
+    }
+    
+    // Get user and verify the email matches
+    const user = await User.findById(userId);
+    if (!user || user.email !== currentEmail) {
+      return res.status(400).json({ message: 'Email address does not match your account' });
+    }
+    
+    // Generate verification code
+    const verificationCode = verificationService.generateVerificationCode();
+    console.log(`Generated email change identity verification code ${verificationCode} for user ID ${userId}`);
+    
+    // Store verification code (reuse existing verification_code field)
+    await verificationService.saveVerificationCode(userId, verificationCode);
+    
+    // Create email content for identity verification
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <h2 style="color: #4F46E5;">Verify Your Identity</h2>
+        <p>Hello ${user.name},</p>
+        <p>You've requested to change your email address. To confirm it's you, please use the following verification code:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; background-color: #f3f4f6; padding: 15px; border-radius: 5px;">${verificationCode}</div>
+        </div>
+        <p>If you did not request this email change, please ignore this email or contact support.</p>
+        <p>This code will expire in 1 hour.</p>
+        <p>Thank you for using tenantli!</p>
+        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+        <p style="font-size: 12px; color: #666;">This is an automated message. Please do not reply to this email.</p>
+      </div>
+    `;
+    
+    // Send verification email to current email address
+    const emailResult = await mailService.sendEmail({
+      to: currentEmail,
+      subject: 'Verify Your Identity - tenantli',
+      html: html,
+      text: `Hello ${user.name}, You've requested to change your email address. Please use the following verification code to verify your identity: ${verificationCode}. This code will expire in 1 hour.`
+    });
+    
+    res.json({
+      success: true,
+      message: 'Verification code sent to your current email address',
+      emailSent: emailResult.success
+    });
+  } catch (error) {
+    console.error('Request email change verification error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Request email change - send verification code to new email
+exports.requestEmailChange = async (req, res) => {
+  try {
+    const { newEmail } = req.body;
+    const userId = req.user.id;
+    
+    if (!newEmail) {
+      return res.status(400).json({ message: 'New email address is required' });
+    }
+    
+    // Check if new email is already in use
+    const existingUser = await User.findByEmail(newEmail);
+    if (existingUser) {
+      return res.status(400).json({ message: 'This email address is already in use' });
+    }
+    
+    // Generate verification code
+    const verificationCode = verificationService.generateVerificationCode();
+    console.log(`Generated email change verification code ${verificationCode} for user ID ${userId}`);
+    
+    // Store email change request with expiration (1 hour from now)
+    const expiryDate = new Date();
+    expiryDate.setHours(expiryDate.getHours() + 1);
+    
+    // Format date to MySQL DATETIME format
+    const year = expiryDate.getFullYear();
+    const month = String(expiryDate.getMonth() + 1).padStart(2, '0');
+    const day = String(expiryDate.getDate()).padStart(2, '0');
+    const hours = String(expiryDate.getHours()).padStart(2, '0');
+    const minutes = String(expiryDate.getMinutes()).padStart(2, '0');
+    const seconds = String(expiryDate.getSeconds()).padStart(2, '0');
+    const mySqlDatetime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    
+    // Store the email change request
+    await db.execute(
+      'UPDATE users SET email_change_code = ?, email_change_expires = ?, new_email = ? WHERE id = ?',
+      [verificationCode, mySqlDatetime, newEmail, userId]
+    );
+    
+    // Get user information for email
+    const user = await User.findById(userId);
+    
+    // Create email content
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <h2 style="color: #4F46E5;">Verify Your New Email Address</h2>
+        <p>Hello ${user.name},</p>
+        <p>You've requested to change your email address to: <strong>${newEmail}</strong></p>
+        <p>Please use the following verification code to confirm this change:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; background-color: #f3f4f6; padding: 15px; border-radius: 5px;">${verificationCode}</div>
+        </div>
+        <p>If you did not request this email change, please ignore this email or contact support.</p>
+        <p>This code will expire in 1 hour.</p>
+        <p>Thank you for using tenantli!</p>
+        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
+        <p style="font-size: 12px; color: #666;">This is an automated message. Please do not reply to this email.</p>
+      </div>
+    `;
+    
+    // Send verification email to NEW email address
+    const emailResult = await mailService.sendEmail({
+      to: newEmail,
+      subject: 'Verify Your New Email Address - tenantli',
+      html: html,
+      text: `Hello ${user.name}, You've requested to change your email address. Please use the following verification code: ${verificationCode}. This code will expire in 1 hour.`
+    });
+    
+    res.json({
+      success: true,
+      message: 'Verification code sent to your new email address',
+      emailSent: emailResult.success
+    });
+  } catch (error) {
+    console.error('Request email change error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Verify email change code and update user's email
+exports.verifyEmailChange = async (req, res) => {
+  try {
+    const { userId, code, newEmail } = req.body;
+    
+    if (!userId || !code || !newEmail) {
+      return res.status(400).json({ message: 'User ID, verification code, and new email are required' });
+    }
+    
+    // Get email change data from database
+    const [rows] = await db.execute(
+      'SELECT email_change_code, email_change_expires, new_email FROM users WHERE id = ?',
+      [userId]
+    );
+    
+    if (rows.length === 0 || !rows[0].email_change_code) {
+      return res.status(400).json({ message: 'No email change request found for this account' });
+    }
+    
+    const { email_change_code, email_change_expires, new_email } = rows[0];
+    
+    // Verify that the new email matches
+    if (new_email !== newEmail) {
+      return res.status(400).json({ message: 'Email change request mismatch' });
+    }
+    
+    // Check if code has expired
+    const now = new Date();
+    if (email_change_expires) {
+      let parts = email_change_expires.split(/[- :]/);
+      const expiryDate = new Date(
+        parts[0], parts[1]-1, parts[2], 
+        parts[3], parts[4], parts[5]
+      );
+      
+      if (now > expiryDate) {
+        return res.status(400).json({ message: 'Verification code has expired. Please request a new one.' });
+      }
+    }
+    
+    // Verify that codes match
+    if (code !== email_change_code) {
+      return res.status(400).json({ message: 'Invalid verification code' });
+    }
+    
+    // Check again if new email is available (race condition protection)
+    const existingUser = await User.findByEmail(newEmail);
+    if (existingUser && existingUser.id !== parseInt(userId)) {
+      return res.status(400).json({ message: 'This email address is already in use' });
+    }
+    
+    // Update user's email and clear email change fields
+    await db.execute(
+      'UPDATE users SET email = ?, email_change_code = NULL, email_change_expires = NULL, new_email = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [newEmail, userId]
+    );
+    
+    console.log(`Email successfully changed for user ID ${userId} to ${newEmail}`);
+    
+    res.json({
+      success: true,
+      message: 'Email address successfully updated'
+    });
+  } catch (error) {
+    console.error('Verify email change error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

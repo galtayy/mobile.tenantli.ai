@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useAuth } from '../lib/auth';
+import { apiService } from '../lib/api';
 
 // SVG ikonlar
 const ArrowLeftIcon = () => (
@@ -18,6 +19,8 @@ export default function EmailVerification() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [seconds, setSeconds] = useState(180); // 3 minutes countdown
+  const [verificationType, setVerificationType] = useState('registration'); // 'registration' or 'email-change'
+  const [newEmail, setNewEmail] = useState(''); // For email change verification
   const router = useRouter();
   const { verifyEmail, resendVerificationCode } = useAuth();
   const inputRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
@@ -31,6 +34,18 @@ export default function EmailVerification() {
       
       if (router.query.userId) {
         setUserId(router.query.userId);
+      }
+
+      // Check if this is email change verification
+      if (router.query.type === 'email-change') {
+        setVerificationType('email-change');
+        if (router.query.newEmail) {
+          setNewEmail(router.query.newEmail);
+          setEmail(router.query.newEmail); // Display the new email in UI
+        }
+      } else if (router.query.type === 'email-change-step1') {
+        setVerificationType('email-change-step1');
+        // For step 1, we're verifying current email
       }
     }
   }, [router.isReady, router.query]);
@@ -113,23 +128,73 @@ export default function EmailVerification() {
     setError('');
     
     try {
-      console.log('Submitting verification with:', { userId, code });
+      console.log('Submitting verification with:', { userId, code, verificationType });
       
-      // Call the actual verification API with userId and code
-      // Note: The backend now accepts both 'userId' and 'id' parameters
-      const result = await verifyEmail(userId, code);
-      
-      console.log('Verification result:', result);
-      
-      if (result && result.success) {
-        // Mark user as newly verified so they can be redirected to onboarding flow
-        localStorage.setItem('newlyVerified', 'true');
-        // If verification is successful, redirect to success page
-        router.push('/verification-success');
+      if (verificationType === 'email-change-step1') {
+        // Step 1: Verify current email identity
+        console.log('Verifying current email identity:', { userId, code });
+        
+        try {
+          // Use direct API call for step 1 verification
+          console.log('Calling direct API for step 1 verification:', { userId, code });
+          
+          const response = await apiService.auth.verifyEmail({ userId, code });
+          console.log('Direct API result:', response);
+          
+          if (response.data && response.data.success) {
+            console.log('Step 1 verification successful, redirecting to success page');
+            // Step 1 successful, go to verification success page with email change flag
+            router.push('/verification-success?type=email-change-step1');
+          } else {
+            console.log('Step 1 verification failed:', response.data);
+            setError('Invalid verification code. Please try again.');
+          }
+        } catch (error) {
+          console.error('Step 1 verification failed:', error);
+          if (error.response && error.response.data) {
+            console.log('Error response:', error.response.data);
+            setError(error.response.data.message || 'Invalid verification code. Please try again.');
+          } else {
+            setError('Invalid verification code. Please try again.');
+          }
+        }
+      } else if (verificationType === 'email-change') {
+        // Step 2: Email change verification (final step)
+        console.log('Sending email change verification:', { userId, code, newEmail });
+        
+        // Use apiService 
+        const response = await apiService.auth.verifyEmailChange({
+          userId,
+          code,
+          newEmail
+        });
+        
+        const result = response.data;
+        console.log('Email change verification response:', result);
+        
+        if (result.success) {
+          localStorage.setItem('emailChangeSuccess', 'true');
+          router.push('/verification-success?type=email-change');
+        } else {
+          console.error('Email change verification failed:', result);
+          setError(result.message || 'Invalid verification code. Please try again.');
+        }
       } else {
-        // If verification fails, show error
-        console.error('Verification failed:', result);
-        setError('Invalid verification code. Please try again.');
+        // Regular registration verification
+        const result = await verifyEmail(userId, code);
+        
+        console.log('Verification result:', result);
+        
+        if (result && result.success) {
+          // Mark user as newly verified so they can be redirected to onboarding flow
+          localStorage.setItem('newlyVerified', 'true');
+          // If verification is successful, redirect to success page
+          router.push('/verification-success');
+        } else {
+          // If verification fails, show error
+          console.error('Verification failed:', result);
+          setError('Invalid verification code. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Verification error:', error);
@@ -208,21 +273,22 @@ export default function EmailVerification() {
         className="relative min-h-screen w-full font-['Nunito']" 
         style={{ backgroundColor: '#FBF5DA' }}
       >
-        {/* Safe area for status bar */}
-        <div className="h-10 w-full"></div>
-        
-        {/* Header */}
-        <div className="w-full h-[65px] flex items-center justify-center p-5 bg-[#FBF5DA] relative">
-          <Link href="/login" className="absolute left-[20px] top-1/2 -translate-y-1/2">
-            <ArrowLeftIcon />
-          </Link>
-          <h1 className="font-semibold text-[18px] text-center text-[#0B1420]">
-            Verify Email
-          </h1>
+        {/* Header - Fixed positioning */}
+        <div className="fixed top-0 left-0 right-0 bg-[#FBF5DA] z-20">
+          <div className="w-full max-w-[390px] mx-auto">
+            <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
+              <Link href="/login" className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2">
+                <ArrowLeftIcon />
+              </Link>
+              <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+                Verify Email
+              </h1>
+            </div>
+          </div>
         </div>
         
-        {/* Content Frame */}
-        <div className="flex flex-col items-center p-6 gap-6 mt-4">
+        {/* Content Frame - Start after header */}
+        <div className="flex flex-col items-center p-6 gap-6 pt-[85px]">
           {/* Email envelope image */}
           <div className="relative h-[180px] w-[180px] flex items-center justify-center">
             <div className="absolute w-[180px] h-[180px] bg-white rounded-full shadow-sm overflow-hidden">

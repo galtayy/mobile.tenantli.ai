@@ -231,6 +231,17 @@ exports.getReportByUuid = async (req, res) => {
               }
             }
             
+            // Ensure move-out specific fields are preserved
+            if (room.moveOutDate) {
+              rooms[i].moveOutDate = room.moveOutDate;
+            }
+            if (room.moveOutCompleted !== undefined) {
+              rooms[i].moveOutCompleted = room.moveOutCompleted;
+            }
+            if (room.moveOutPhotoCount !== undefined) {
+              rooms[i].moveOutPhotoCount = room.moveOutPhotoCount;
+            }
+            
             // Property adres bilgisini odaya ekle
             rooms[i].address = report.address;
             rooms[i].property_type = report.property_type || 'unknown';

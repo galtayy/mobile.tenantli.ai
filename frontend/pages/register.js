@@ -88,13 +88,14 @@ export default function Register() {
 
   // Password validation function
   const validatePassword = (password) => {
-    // Password should be 8-16 characters, include a capital letter, a lowercase letter, and a number
-    const hasLength = password.length >= 8 && password.length <= 16;
+    // Password should be 8+ characters, include a capital letter, a lowercase letter, a number, and a special character
+    const hasLength = password.length >= 8;
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
     
-    return hasLength && hasUppercase && hasLowercase && hasNumber;
+    return hasLength && hasUppercase && hasLowercase && hasNumber && hasSpecial;
   };
 
 
@@ -113,7 +114,8 @@ export default function Register() {
   }, [email, errors.email]);
 
   useEffect(() => {
-    if (errors.password && password) {
+    // Only clear error if password becomes valid
+    if (errors.password && password && validatePassword(password)) {
       setErrors(prev => ({ ...prev, password: '' }));
     }
   }, [password, errors.password]);
@@ -141,17 +143,17 @@ export default function Register() {
     const newErrors = { email: '', password: '', confirmPassword: '', general: '', terms: '' };
     
     if (!validateEmail(email)) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'That doesn’t look like a valid email.';
       hasError = true;
     }
     
     if (!validatePassword(password)) {
-      newErrors.password = 'Password must be 8-16 characters with uppercase, lowercase, and number';
+      newErrors.password = 'Your password needs to be a bit stronger.';
       hasError = true;
     }
     
     if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Those passwords don’t match.';
       hasError = true;
     }
     
@@ -232,21 +234,32 @@ export default function Register() {
       <div 
         className="relative min-h-screen mobile-full-height w-full font-['Nunito'] overflow-hidden"
       >
-        {/* Status Bar Space */}
-        <div className="h-10 w-full sm:h-0"></div>
-        
         {/* Header */}
-        <div className="absolute w-full h-[65px] left-0 top-[40px] sm:top-8 flex flex-row justify-center items-center px-4">
-          <Link href="/welcome" className="absolute left-[20px] top-1/2 -translate-y-1/2">
-            <ArrowLeftIcon />
-          </Link>
-          <h1 className="font-semibold text-[18px] text-center text-[#0B1420]">
-            Sign Up
-          </h1>
+        <div className="fixed top-0 left-0 right-0 bg-[#FBF5DA] z-20">
+          <div className="w-full max-w-[390px] mx-auto">
+            <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
+              <button 
+                className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  router.push('/welcome');
+                }}
+                aria-label="Go back"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 19L8 12L15 5" stroke="#2E3642" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+              <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
+                Sign Up
+              </h1>
+            </div>
+          </div>
         </div>
         
         {/* Content Container */}
-        <div className="w-full flex flex-col items-center px-[5%] pt-[121px] sm:pt-[100px]">
+        <div className="w-full flex flex-col items-center px-[5%] pt-[85px]">
           {/* General Error Message */}
           {errors.general && (
             <div className="w-full max-w-[350px] sm:max-w-[400px] lg:max-w-[420px] bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 mb-6 flex items-center">
@@ -281,7 +294,7 @@ export default function Register() {
                     setFocusedField(null);
                     const emailValue = e.target.value;
                     if (emailValue && !emailValue.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-                      setErrors(prev => ({ ...prev, email: 'Please enter a valid email address' }));
+                      setErrors(prev => ({ ...prev, email: 'That doesn’t look like a valid email.' }));
                     }
                   }}
                   placeholder="Email"
@@ -314,7 +327,6 @@ export default function Register() {
                   placeholder="Create a password"
                   className="flex-1 outline-none bg-transparent text-[#515964] font-bold text-[14px] leading-[19px]"
                   minLength={8}
-                  maxLength={16}
                 />
                 <button 
                   type="button" 
@@ -324,30 +336,40 @@ export default function Register() {
                   {showPassword ? <EyeIcon /> : <EyeSlashIcon />}
                 </button>
               </div>
-              <InputError message={errors.password} />
+              
+              {/* Inline Password Error */}
+              {errors.password && (
+                <div className="mt-1 text-red-600 text-xs font-normal pl-[20px]">
+                  {errors.password}
+                </div>
+              )}
               
               {/* Password Requirements */}
-              {focusedField === 'password' && password && (
-                <div className="mt-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-100">
-                  <p className="text-xs text-gray-600 mb-1">Password requirements:</p>
-                  <ul className="text-xs space-y-1">
-                    <li className={`flex items-center ${password.length >= 8 && password.length <= 16 ? 'text-green-600' : 'text-gray-400'}`}>
-                      <span className={`w-3 h-3 mr-2 rounded-full ${password.length >= 8 && password.length <= 16 ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                      8-16 characters
-                    </li>
-                    <li className={`flex items-center ${/[A-Z]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
-                      <span className={`w-3 h-3 mr-2 rounded-full ${/[A-Z]/.test(password) ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                      At least one uppercase letter
-                    </li>
-                    <li className={`flex items-center ${/[a-z]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
-                      <span className={`w-3 h-3 mr-2 rounded-full ${/[a-z]/.test(password) ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                      At least one lowercase letter
-                    </li>
-                    <li className={`flex items-center ${/[0-9]/.test(password) ? 'text-green-600' : 'text-gray-400'}`}>
-                      <span className={`w-3 h-3 mr-2 rounded-full ${/[0-9]/.test(password) ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                      At least one number
-                    </li>
-                  </ul>
+              {focusedField === 'password' && (
+                <div className="mt-2 flex flex-col p-[18px_20px] gap-[8px] w-full bg-white border border-[#D1E7D5] rounded-[16px]">
+                  <div className="flex flex-row items-start p-0 gap-[8px] flex-grow">
+                    <div className="font-['Nunito'] font-semibold text-[14px] leading-[160%] whitespace-pre-line">
+                      <span className={password.length >= 8 ? 'text-[#4D935A]' : 'text-gray-400'}>
+                        8+ characters
+                      </span>
+                      <br />
+                      <span className={/[A-Z]/.test(password) ? 'text-[#4D935A]' : 'text-gray-400'}>
+                        1 uppercase letter
+                      </span>
+                      <br />
+                      <span className={/[a-z]/.test(password) ? 'text-[#4D935A]' : 'text-gray-400'}>
+                        1 lowercase letter
+                      </span>
+                      <br />
+                      <span className={/[0-9]/.test(password) ? 'text-[#4D935A]' : 'text-gray-400'}>
+                        1 number
+                      </span>
+                      <br />
+                      <span className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password) ? 'text-[#4D935A]' : 'text-gray-400'}>
+                        1 special character (like ! or @)
+                      </span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -375,7 +397,6 @@ export default function Register() {
                   placeholder="Confirm your password"
                   className="flex-1 outline-none bg-transparent text-[#515964] font-bold text-[14px] leading-[19px]"
                   minLength={8}
-                  maxLength={16}
                 />
                 <button 
                   type="button" 
