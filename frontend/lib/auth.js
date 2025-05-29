@@ -272,6 +272,24 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Refresh user data
+  const refreshUser = async () => {
+    if (typeof window === 'undefined') return false;
+    
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+    
+    try {
+      // Fetch fresh user data from API
+      const userResponse = await apiService.auth.getUser();
+      setUser(userResponse.data);
+      return true;
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      return false;
+    }
+  };
+
   const value = {
     user,
     loading,
@@ -282,6 +300,7 @@ export function AuthProvider({ children }) {
     resendVerificationCode,
     logout,
     checkAuth,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

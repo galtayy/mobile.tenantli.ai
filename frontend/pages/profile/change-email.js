@@ -122,15 +122,15 @@ export default function ChangeEmail() {
       <div className="w-full max-w-[390px] mx-auto" style={{ paddingTop: 'calc(65px + env(safe-area-inset-top))' }}>
         <div className="px-[20px] pb-[120px]">
           {/* Content Section */}
-          <div className="flex flex-col items-start pt-[16px] gap-[24px] w-[350px]">
+          <div className="flex flex-col items-start pt-[16px] gap-[24px] w-full max-w-[350px]">
             {/* Description */}
-            <div className="w-[350px] font-['Nunito'] font-bold text-[16px] leading-[22px] text-[#0B1420]">
+            <div className="w-full font-['Nunito'] font-bold text-[16px] leading-[22px] text-[#0B1420]">
               Enter your current email address — we'll send you a verification code to confirm it's you.
             </div>
             
             {/* Email Input */}
             <form onSubmit={handleSendCode} className="w-full">
-              <div className="flex flex-row items-center py-[18px] px-[20px] gap-[8px] w-[350px] h-[56px] bg-white border border-[#D1E7D5] rounded-[16px]">
+              <div className="flex flex-row items-center py-[18px] px-[20px] gap-[8px] w-full h-[56px] bg-white border border-[#D1E7D5] rounded-[16px]">
                 {/* Email Icon */}
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M14.1667 17.0833H5.83333C3.33333 17.0833 1.66667 15.8333 1.66667 12.9167V7.08333C1.66667 4.16667 3.33333 2.91667 5.83333 2.91667H14.1667C16.6667 2.91667 18.3333 4.16667 18.3333 7.08333V12.9167C18.3333 15.8333 16.6667 17.0833 14.1667 17.0833Z" stroke="#515964" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
@@ -159,7 +159,7 @@ export default function ChangeEmail() {
           <button
             onClick={handleSendCode}
             disabled={isSubmitting}
-            className="w-[350px] h-[56px] flex justify-center items-center bg-[#1C2C40] rounded-[16px] font-['Nunito'] font-bold text-[16px] leading-[22px] text-[#D1E7E2] disabled:opacity-50"
+            className="w-full max-w-[350px] h-[56px] flex justify-center items-center bg-[#1C2C40] rounded-[16px] font-['Nunito'] font-bold text-[16px] leading-[22px] text-[#D1E7E2] disabled:opacity-50"
           >
             {isSubmitting ? 'Sending...' : 'Send Code'}
           </button>

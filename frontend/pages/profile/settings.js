@@ -78,15 +78,15 @@ export default function Settings() {
             <h2 className="font-semibold text-[14px] text-[#515964] mb-3 uppercase tracking-wider">Notifications</h2>
             
             {/* Push Notifications */}
-            <div className="bg-white rounded-[16px] p-4 mb-2">
+            <div className="bg-white rounded-[16px] p-4 mb-2 opacity-50">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold text-[16px] text-[#0B1420]">Push Notifications</h3>
                   <p className="text-[12px] text-[#515964] mt-1">Receive notifications about property updates</p>
                 </div>
                 <button
-                  onClick={() => setNotifications(!notifications)}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                  disabled
+                  className={`relative w-12 h-6 rounded-full transition-colors cursor-not-allowed ${
                     notifications ? 'bg-[#4D935A]' : 'bg-gray-300'
                   }`}
                 >
@@ -100,15 +100,15 @@ export default function Settings() {
             </div>
 
             {/* Email Notifications */}
-            <div className="bg-white rounded-[16px] p-4">
+            <div className="bg-white rounded-[16px] p-4 opacity-50">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold text-[16px] text-[#0B1420]">Email Notifications</h3>
                   <p className="text-[12px] text-[#515964] mt-1">Receive important updates via email</p>
                 </div>
                 <button
-                  onClick={() => setEmailNotifications(!emailNotifications)}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                  disabled
+                  className={`relative w-12 h-6 rounded-full transition-colors cursor-not-allowed ${
                     emailNotifications ? 'bg-[#4D935A]' : 'bg-gray-300'
                   }`}
                 >
@@ -127,15 +127,15 @@ export default function Settings() {
             <h2 className="font-semibold text-[14px] text-[#515964] mb-3 uppercase tracking-wider">App Preferences</h2>
             
             {/* Auto-save */}
-            <div className="bg-white rounded-[16px] p-4 mb-2">
+            <div className="bg-white rounded-[16px] p-4 mb-2 opacity-50">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-semibold text-[16px] text-[#0B1420]">Auto-save</h3>
                   <p className="text-[12px] text-[#515964] mt-1">Automatically save progress as you work</p>
                 </div>
                 <button
-                  onClick={() => setAutoSave(!autoSave)}
-                  className={`relative w-12 h-6 rounded-full transition-colors ${
+                  disabled
+                  className={`relative w-12 h-6 rounded-full transition-colors cursor-not-allowed ${
                     autoSave ? 'bg-[#4D935A]' : 'bg-gray-300'
                   }`}
                 >
@@ -153,15 +153,15 @@ export default function Settings() {
           <div className="mb-6">
             <h2 className="font-semibold text-[14px] text-[#515964] mb-3 uppercase tracking-wider">About</h2>
             
-            <div className="bg-white rounded-[16px] p-4 space-y-3">
+            <div className="bg-white rounded-[16px] p-4 space-y-3 opacity-50">
               <div className="flex justify-between">
                 <span className="text-[14px] text-[#515964]">Version</span>
                 <span className="text-[14px] text-[#0B1420] font-medium">1.0.0</span>
               </div>
               <div className="border-t border-[#ECF0F5]"></div>
               <button 
-                onClick={() => window.open('/terms', '_blank')}
-                className="flex justify-between items-center w-full"
+                disabled
+                className="flex justify-between items-center w-full cursor-not-allowed"
               >
                 <span className="text-[14px] text-[#0B1420]">Terms of Service</span>
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -170,8 +170,8 @@ export default function Settings() {
               </button>
               <div className="border-t border-[#ECF0F5]"></div>
               <button 
-                onClick={() => window.open('/privacy', '_blank')}
-                className="flex justify-between items-center w-full"
+                disabled
+                className="flex justify-between items-center w-full cursor-not-allowed"
               >
                 <span className="text-[14px] text-[#0B1420]">Privacy Policy</span>
                 <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">

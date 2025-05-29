@@ -330,17 +330,36 @@ export default function UserDetails() {
         localStorage.setItem(`property_${propertyID}_user_signature`, signature.preview);
       }
       
-      // If user doesn't have phone number in DB or it's different, update it
+      // Update user profile in DB if any data has changed
+      const updates = {};
+      let needsUpdate = false;
+      
+      // Check if name has changed
+      if (user && user.name !== name) {
+        updates.name = name;
+        needsUpdate = true;
+      }
+      
+      // Check if email has changed
+      if (user && user.email !== email) {
+        updates.email = email;
+        needsUpdate = true;
+      }
+      
+      // Check if phone has changed
       if (user && (!user.phone || user.phone !== phoneDigits)) {
+        updates.phone = phoneDigits;
+        needsUpdate = true;
+      }
+      
+      if (needsUpdate) {
         try {
-          console.log('Updating user phone number in DB:', phoneDigits);
-          await apiService.user.updateProfile({
-            phone: phoneDigits
-          });
-          console.log('Phone number updated successfully');
+          console.log('Updating user profile in DB:', updates);
+          await apiService.user.updateProfile(updates);
+          console.log('User profile updated successfully');
         } catch (updateError) {
-          console.error('Error updating phone number:', updateError);
-          // Continue even if phone update fails
+          console.error('Error updating user profile:', updateError);
+          // Continue even if profile update fails
         }
       }
       

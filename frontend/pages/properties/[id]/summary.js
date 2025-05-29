@@ -1078,9 +1078,8 @@ export default function PropertySummary() {
                     className="px-4 py-3 flex items-start justify-between cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-t border-[#ECF0F5] first:border-t-0"
                     onClick={() => {
                       router.push({
-                        pathname: `/move-out/room`,
+                        pathname: `/properties/${id}/configure-room`,
                         query: {
-                          propertyId: id,
                           roomId: roomId,
                           roomName: displayName,
                           roomType: roomType,

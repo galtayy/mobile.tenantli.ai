@@ -6,7 +6,7 @@ import { useAuth } from '../../lib/auth';
 import { apiService } from '../../lib/api';
 
 export default function NewPhoneNumber() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const router = useRouter();
   const [newPhoneNumber, setNewPhoneNumber] = useState('');
 
@@ -73,6 +73,16 @@ export default function NewPhoneNumber() {
       
       if (response.data) {
         toast.success('Phone number updated successfully!');
+        
+        // Update the user context with new phone number
+        try {
+          // Refresh user data from API to get updated phone number
+          await refreshUser();
+        } catch (refreshError) {
+          console.error('Error refreshing user data:', refreshError);
+          // Continue anyway, the update was successful
+        }
+        
         router.push('/phone-change-success');
       }
     } catch (error) {

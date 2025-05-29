@@ -584,18 +584,38 @@ exports.requestEmailChangeVerification = async (req, res) => {
     
     // Create email content for identity verification
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-        <h2 style="color: #4F46E5;">Verify Your Identity</h2>
-        <p>Hello ${user.name},</p>
-        <p>You've requested to change your email address. To confirm it's you, please use the following verification code:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; background-color: #f3f4f6; padding: 15px; border-radius: 5px;">${verificationCode}</div>
+      <div style="background-color: #FBF5DA; padding: 40px 20px; min-height: 100vh;">
+        <div style="font-family: 'Nunito', Arial, sans-serif; max-width: 390px; margin: 0 auto;">
+          <div style="background-color: white; border-radius: 16px; border: 1px solid #F6FEF7; padding: 32px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+            <div style="text-align: center; margin-bottom: 32px;">
+              <h2 style="color: #0B1420; font-size: 24px; font-weight: 600; margin: 0; line-height: 32px;">Verify Your Identity</h2>
+            </div>
+            
+            <p style="color: #515964; font-size: 16px; margin-bottom: 8px;">Hi ${user.name},</p>
+            
+            <p style="color: #515964; font-size: 16px; line-height: 24px; margin-bottom: 32px;">You've requested to change your email address. To confirm it's you, please enter this verification code:</p>
+            
+            <div style="text-align: center; margin: 32px 0;">
+              <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; background-color: #E8F5EB; color: #1C2C40; padding: 20px 24px; border-radius: 16px; display: inline-block; font-family: monospace;">
+                ${verificationCode}
+              </div>
+            </div>
+            
+            <p style="color: #515964; font-size: 14px; text-align: center; margin: 24px 0;">This code expires in 1 hour</p>
+            
+            <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #F6FEF7;">
+              <p style="color: #515964; font-size: 13px; line-height: 20px; margin-bottom: 0;">
+                If you didn't request this email change, please ignore this email.
+              </p>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 24px;">
+            <p style="color: #515964; font-size: 12px; margin: 0;">
+              © 2024 tenantli. All rights reserved.
+            </p>
+          </div>
         </div>
-        <p>If you did not request this email change, please ignore this email or contact support.</p>
-        <p>This code will expire in 1 hour.</p>
-        <p>Thank you for using tenantli!</p>
-        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-        <p style="font-size: 12px; color: #666;">This is an automated message. Please do not reply to this email.</p>
       </div>
     `;
     
@@ -662,19 +682,40 @@ exports.requestEmailChange = async (req, res) => {
     
     // Create email content
     const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
-        <h2 style="color: #4F46E5;">Verify Your New Email Address</h2>
-        <p>Hello ${user.name},</p>
-        <p>You've requested to change your email address to: <strong>${newEmail}</strong></p>
-        <p>Please use the following verification code to confirm this change:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <div style="font-size: 32px; font-weight: bold; letter-spacing: 5px; background-color: #f3f4f6; padding: 15px; border-radius: 5px;">${verificationCode}</div>
+      <div style="background-color: #FBF5DA; padding: 40px 20px; min-height: 100vh;">
+        <div style="font-family: 'Nunito', Arial, sans-serif; max-width: 390px; margin: 0 auto;">
+          <div style="background-color: white; border-radius: 16px; border: 1px solid #F6FEF7; padding: 32px 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06);">
+            <div style="text-align: center; margin-bottom: 32px;">
+              <h2 style="color: #0B1420; font-size: 24px; font-weight: 600; margin: 0; line-height: 32px;">Verify Your New Email</h2>
+            </div>
+            
+            <p style="color: #515964; font-size: 16px; margin-bottom: 8px;">Hi ${user.name},</p>
+            
+            <p style="color: #515964; font-size: 16px; line-height: 24px; margin-bottom: 16px;">You've requested to change your email address to:</p>
+            <p style="color: #0B1420; font-size: 16px; font-weight: 600; margin-bottom: 16px;">${newEmail}</p>
+            <p style="color: #515964; font-size: 16px; line-height: 24px; margin-bottom: 32px;">Please enter this verification code to confirm the change:</p>
+            
+            <div style="text-align: center; margin: 32px 0;">
+              <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; background-color: #E8F5EB; color: #1C2C40; padding: 20px 24px; border-radius: 16px; display: inline-block; font-family: monospace;">
+                ${verificationCode}
+              </div>
+            </div>
+            
+            <p style="color: #515964; font-size: 14px; text-align: center; margin: 24px 0;">This code expires in 1 hour</p>
+            
+            <div style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #F6FEF7;">
+              <p style="color: #515964; font-size: 13px; line-height: 20px; margin-bottom: 0;">
+                If you didn't request this email change, please ignore this email.
+              </p>
+            </div>
+          </div>
+          
+          <div style="text-align: center; margin-top: 24px;">
+            <p style="color: #515964; font-size: 12px; margin: 0;">
+              © 2024 tenantli. All rights reserved.
+            </p>
+          </div>
         </div>
-        <p>If you did not request this email change, please ignore this email or contact support.</p>
-        <p>This code will expire in 1 hour.</p>
-        <p>Thank you for using tenantli!</p>
-        <hr style="border: none; border-top: 1px solid #e0e0e0; margin: 20px 0;">
-        <p style="font-size: 12px; color: #666;">This is an automated message. Please do not reply to this email.</p>
       </div>
     `;
     
