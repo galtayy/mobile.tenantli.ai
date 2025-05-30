@@ -502,6 +502,180 @@ export default function PropertySummary() {
     loadData();
   }, [id, user, from]);
 
+  // Check for room data update flag
+  useEffect(() => {
+    const checkRoomUpdateFlag = () => {
+      const roomDataUpdated = localStorage.getItem('roomDataUpdated');
+      const lastUpdatedRoom = localStorage.getItem('lastUpdatedRoom');
+      
+      if (roomDataUpdated === 'true') {
+        const updateTime = localStorage.getItem('roomDataUpdateTime');
+        console.log('Room data updated flag detected, refreshing summary data...', {
+          lastUpdatedRoom,
+          updateTime,
+          currentTime: new Date().toISOString()
+        });
+        
+        // Clear the flag
+        localStorage.removeItem('roomDataUpdated');
+        localStorage.removeItem('lastUpdatedRoom');
+        localStorage.removeItem('roomDataUpdateTime');
+        
+        // Refresh data
+        const refreshData = async () => {
+          try {
+            // Reload photos
+            try {
+              const photosResponse = await apiService.photos.getByProperty(id);
+              if (photosResponse.data) {
+                console.log("Room update: Refreshed property photos from API:", photosResponse.data);
+
+                const photosByRoom = {};
+                if (Array.isArray(photosResponse.data)) {
+                  photosResponse.data.forEach(photo => {
+                    if (photo.room_id) {
+                      if (!photosByRoom[photo.room_id]) {
+                        photosByRoom[photo.room_id] = { photos: [] };
+                      }
+
+                      const fullUrl = photo.url && photo.url.startsWith('/')
+                        ? `${apiService.getBaseUrl()}${photo.url}`
+                        : photo.url;
+
+                      photosByRoom[photo.room_id].photos.push({
+                        ...photo,
+                        url: fullUrl
+                      });
+                    }
+                  });
+                }
+                setRoomPhotos(photosByRoom);
+              }
+            } catch (photoApiError) {
+              console.error("Room update: Error refreshing photos:", photoApiError);
+            }
+            
+            // Reload rooms
+            const roomsResponse = await apiService.properties.getRooms(id);
+            if (roomsResponse.data && Array.isArray(roomsResponse.data)) {
+              console.log("Room update: Refreshed rooms from database:", roomsResponse.data);
+              
+              // Merge with localStorage
+              const savedRooms = localStorage.getItem(`property_${id}_rooms`);
+              let roomsFromLocalStorage = [];
+              
+              if (savedRooms) {
+                try {
+                  roomsFromLocalStorage = JSON.parse(savedRooms);
+                } catch (e) {
+                  console.error("Room update: Error parsing rooms from localStorage:", e);
+                }
+              }
+              
+              if (roomsFromLocalStorage.length > 0) {
+                const dbRoomsMap = {};
+                roomsResponse.data.forEach(room => {
+                  const roomId = room.roomId || room.id;
+                  if (roomId) {
+                    dbRoomsMap[roomId] = room;
+                  }
+                });
+
+                const localRoomsMap = {};
+                roomsFromLocalStorage.forEach(room => {
+                  const roomId = room.roomId || room.id;
+                  if (roomId) {
+                    localRoomsMap[roomId] = room;
+                  }
+                });
+
+                const mergedRooms = [];
+                const allRoomIds = [...new Set([
+                  ...Object.keys(dbRoomsMap),
+                  ...Object.keys(localRoomsMap)
+                ])];
+
+                allRoomIds.forEach(roomId => {
+                  const dbRoom = dbRoomsMap[roomId];
+                  const localRoom = localRoomsMap[roomId];
+
+                  if (dbRoom && localRoom) {
+                    const dbTimestamp = dbRoom.timestamp || dbRoom.lastUpdated || '';
+                    const localTimestamp = localRoom.timestamp || localRoom.lastUpdated || '';
+
+                    if (localTimestamp > dbTimestamp) {
+                      mergedRooms.push(localRoom);
+                    } else {
+                      mergedRooms.push(dbRoom);
+                    }
+                  } else if (dbRoom) {
+                    mergedRooms.push(dbRoom);
+                  } else if (localRoom) {
+                    mergedRooms.push(localRoom);
+                  }
+                });
+
+                console.log("Room update: Merged rooms:", mergedRooms);
+                setRooms(mergedRooms);
+                localStorage.setItem(`property_${id}_rooms`, JSON.stringify(mergedRooms));
+                
+                // Log the specific room that was updated
+                const updatedRoom = mergedRooms.find(r => (r.roomId || r.id) === lastUpdatedRoom);
+                if (updatedRoom) {
+                  console.log("Room update: Updated room details:", {
+                    roomId: updatedRoom.roomId || updatedRoom.id,
+                    roomName: updatedRoom.roomName || updatedRoom.name,
+                    photoCount: updatedRoom.photoCount,
+                    isCompleted: updatedRoom.isCompleted,
+                    roomQuality: updatedRoom.roomQuality,
+                    noteCount: updatedRoom.roomIssueNotes ? updatedRoom.roomIssueNotes.length : 0
+                  });
+                }
+              } else {
+                console.log("Room update: Using rooms from database only");
+                setRooms(roomsResponse.data);
+                localStorage.setItem(`property_${id}_rooms`, JSON.stringify(roomsResponse.data));
+                
+                // Log the specific room that was updated
+                const updatedRoom = roomsResponse.data.find(r => (r.roomId || r.id) === lastUpdatedRoom);
+                if (updatedRoom) {
+                  console.log("Room update: Updated room details (DB only):", {
+                    roomId: updatedRoom.roomId || updatedRoom.id,
+                    roomName: updatedRoom.roomName || updatedRoom.name,
+                    photoCount: updatedRoom.photoCount,
+                    isCompleted: updatedRoom.isCompleted,
+                    roomQuality: updatedRoom.roomQuality,
+                    noteCount: updatedRoom.roomIssueNotes ? updatedRoom.roomIssueNotes.length : 0
+                  });
+                }
+              }
+            }
+          } catch (error) {
+            console.error("Room update: Error refreshing data:", error);
+          }
+        };
+        
+        refreshData();
+      }
+    };
+
+    // Check immediately when component mounts/updates
+    checkRoomUpdateFlag();
+    
+    // Also check when coming back from other pages
+    const handleStorageChange = (e) => {
+      if (e.key === 'roomDataUpdated' && e.newValue === 'true') {
+        checkRoomUpdateFlag();
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [id]);
+
   // Add listener for page focus to refresh data when coming back from room editing
   useEffect(() => {
     const handleFocus = () => {
@@ -790,7 +964,7 @@ export default function PropertySummary() {
   
   // Calculate number of photos for a room
   const getPhotoCount = (roomId) => {
-    console.log("Checking photos for room", roomId, "in", roomPhotos);
+    console.log("getPhotoCount: Checking photos for room", roomId, "roomPhotos state:", roomPhotos);
 
     // First try to get photoCount directly from the room object
     const roomData = rooms.find(r => (r.id === roomId || r.roomId === roomId));
@@ -831,6 +1005,7 @@ export default function PropertySummary() {
 
   // Get number of notes for a room
   const getNoteCount = (room) => {
+    console.log("getNoteCount: Checking notes for room", room.roomId || room.id, "room data:", room);
     try {
       // Try different properties where notes might be stored
       if (room.notes && Array.isArray(room.notes)) {

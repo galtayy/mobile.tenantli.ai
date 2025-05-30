@@ -57,6 +57,16 @@ class User {
     }
   }
 
+  // ID ile kullanıcı bulma (password dahil)
+  static async findByIdWithPassword(id) {
+    try {
+      const [rows] = await db.execute('SELECT id, name, email, phone, role, password, created_at, updated_at FROM users WHERE id = ?', [id]);
+      return rows.length ? rows[0] : null;
+    } catch (error) {
+      throw error;
+    }
+  }
+
   // Kullanıcı güncelleme
   static async update(id, userData) {
     try {

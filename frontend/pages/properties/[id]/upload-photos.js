@@ -706,13 +706,31 @@ export default function UploadPhotos() {
       // Navigate to index-new page after successful room addition
       console.log('[DEBUG] Room saved successfully, preparing to navigate to index-new page');
       
+      // Set flag for summary page to refresh
+      if (returnUrl && returnUrl.includes('summary')) {
+        localStorage.setItem('roomDataUpdated', 'true');
+        localStorage.setItem('lastUpdatedRoom', roomId);
+        localStorage.setItem('roomDataUpdateTime', new Date().toISOString());
+        console.log('[DEBUG] Set roomDataUpdated flag for summary refresh', {
+          roomId,
+          returnUrl,
+          totalPhotoCount: existingPhotos.length + photos.length,
+          roomQuality,
+          noteCount: roomQuality === 'attention' ? finalNotes.length : 0
+        });
+      }
+      
       // Add a small delay before navigation
       setTimeout(() => {
         try {
           if (returnUrl) {
             // If returnUrl is specified, go back there
             console.log('[DEBUG] Navigating back to:', returnUrl);
-            router.push(returnUrl);
+            // Force refresh by adding timestamp query parameter
+            const urlWithRefresh = returnUrl.includes('?') 
+              ? `${returnUrl}&refresh=${new Date().getTime()}`
+              : `${returnUrl}?refresh=${new Date().getTime()}`;
+            router.push(urlWithRefresh);
           } else if (id) {
             // Navigate to add-rooms page with timestamp to prevent caching
             const timestamp = new Date().getTime();
