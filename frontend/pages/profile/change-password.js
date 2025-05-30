@@ -86,22 +86,21 @@ export default function ChangePassword() {
     };
   }, []);
 
-  // Password validation
+  // Password validation - match register page requirements
   const validatePassword = (password) => {
-    const minLength = 8;
-    const maxLength = 16;
+    const hasLength = password.length >= 8;
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
     
     return {
-      isValid: password.length >= minLength && password.length <= maxLength && hasUppercase && hasLowercase && hasNumber,
-      minLength: password.length >= minLength,
-      maxLength: password.length <= maxLength,
-      lengthValid: password.length >= minLength && password.length <= maxLength,
+      isValid: hasLength && hasUppercase && hasLowercase && hasNumber && hasSpecial,
+      hasLength,
       hasUppercase,
       hasLowercase,
-      hasNumber
+      hasNumber,
+      hasSpecial
     };
   };
 
@@ -122,10 +121,13 @@ export default function ChangePassword() {
     if (!newPassword) {
       newErrors.newPassword = 'New password is required';
       hasError = true;
+    } else if (newPassword === currentPassword) {
+      newErrors.newPassword = 'New password must be different from current password';
+      hasError = true;
     } else {
       const validation = validatePassword(newPassword);
       if (!validation.isValid) {
-        newErrors.newPassword = 'Must be 8-16 characters with uppercase, lowercase, and number';
+        newErrors.newPassword = 'Your password needs to be a bit stronger.';
         hasError = true;
       }
     }
@@ -160,18 +162,19 @@ export default function ChangePassword() {
       if (error.response && error.response.data) {
         const message = error.response.data.message || '';
         
+        // Check for same password error first
+        if (message.toLowerCase().includes('cannot be the same as current password') ||
+            message.toLowerCase().includes('same as current') ||
+            message.toLowerCase().includes('cannot be the same')) {
+          setErrors({ ...errors, newPassword: 'New password must be different from current password' });
+          // No toast for this error - only show under input
+        }
         // Check for current password error
-        if (message.toLowerCase().includes('current password') || 
-            message.toLowerCase().includes('incorrect')) {
+        else if (message.toLowerCase().includes('current password') || 
+                 message.toLowerCase().includes('incorrect')) {
           setErrors({ ...errors, currentPassword: 'Incorrect password' });
           // No toast for this error - only show under input
         } 
-        // Check for same password error  
-        else if (message.toLowerCase().includes('same as current') ||
-                 message.toLowerCase().includes('cannot be the same')) {
-          setErrors({ ...errors, newPassword: 'Cannot be the same as current password' });
-          // No toast for this error - only show under input
-        }
         // For any other API errors, show as toast
         else {
           toast.error(message || 'Failed to change password');
@@ -393,28 +396,32 @@ export default function ChangePassword() {
             <p className="text-[#E95858] text-sm mt-1 ml-2">{errors.confirmPassword}</p>
           )}
           
-          {/* Password Requirements */}
-          {focusedField === 'password' && newPassword && (
-            <div className="mt-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-100">
-              <p className="text-xs text-gray-600 mb-1">Password requirements:</p>
-              <ul className="text-xs space-y-1">
-                <li className={`flex items-center ${passwordValidation.lengthValid ? 'text-green-600' : 'text-gray-400'}`}>
-                  <span className={`w-3 h-3 mr-2 rounded-full ${passwordValidation.lengthValid ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                  8-16 characters
-                </li>
-                <li className={`flex items-center ${passwordValidation.hasUppercase ? 'text-green-600' : 'text-gray-400'}`}>
-                  <span className={`w-3 h-3 mr-2 rounded-full ${passwordValidation.hasUppercase ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                  At least one uppercase letter
-                </li>
-                <li className={`flex items-center ${passwordValidation.hasLowercase ? 'text-green-600' : 'text-gray-400'}`}>
-                  <span className={`w-3 h-3 mr-2 rounded-full ${passwordValidation.hasLowercase ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                  At least one lowercase letter
-                </li>
-                <li className={`flex items-center ${passwordValidation.hasNumber ? 'text-green-600' : 'text-gray-400'}`}>
-                  <span className={`w-3 h-3 mr-2 rounded-full ${passwordValidation.hasNumber ? 'bg-green-500' : 'bg-gray-300'}`}></span>
-                  At least one number
-                </li>
-              </ul>
+          {/* Password Requirements - match register page */}
+          {focusedField === 'password' && (
+            <div className="mt-2 flex flex-col p-[18px_20px] gap-[8px] w-full bg-white border border-[#D1E7D5] rounded-[16px]">
+              <div className="flex flex-row items-start p-0 gap-[8px] flex-grow">
+                <div className="font-['Nunito'] font-semibold text-[14px] leading-[160%] whitespace-pre-line">
+                  <span className={newPassword.length >= 8 ? 'text-[#4D935A]' : 'text-gray-400'}>
+                    8+ characters
+                  </span>
+                  <br />
+                  <span className={/[A-Z]/.test(newPassword) ? 'text-[#4D935A]' : 'text-gray-400'}>
+                    1 uppercase letter
+                  </span>
+                  <br />
+                  <span className={/[a-z]/.test(newPassword) ? 'text-[#4D935A]' : 'text-gray-400'}>
+                    1 lowercase letter
+                  </span>
+                  <br />
+                  <span className={/[0-9]/.test(newPassword) ? 'text-[#4D935A]' : 'text-gray-400'}>
+                    1 number
+                  </span>
+                  <br />
+                  <span className={/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword) ? 'text-[#4D935A]' : 'text-gray-400'}>
+                    1 special character (like ! or @)
+                  </span>
+                </div>
+              </div>
             </div>
           )}
           

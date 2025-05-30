@@ -60,14 +60,14 @@ export default function Welcome() {
             transition={{ duration: 0.5, ease: [0.4, 0.0, 0.2, 1] }}
           >
             {/* Lottie Splash Animation */}
-            <div className="w-full h-full max-w-[390px] max-h-[844px] mx-auto">
+            <div className="w-full h-full">
               <Lottie
                 animationData={splashAnimation}
                 loop={false}
                 autoplay={true}
                 style={{ 
-                  width: '100%', 
-                  height: '100%',
+                  width: '100vw', 
+                  height: '100vh',
                   backgroundColor: '#FBF5DA'
                 }}
                 onComplete={() => {
@@ -80,7 +80,7 @@ export default function Welcome() {
         ) : (
           <motion.div 
             key="content"
-            className="flex flex-col min-h-screen font-['Nunito']"
+            className="flex flex-col min-h-screen font-['Nunito'] w-full max-w-[390px] mx-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}

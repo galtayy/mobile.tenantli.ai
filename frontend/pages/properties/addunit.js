@@ -144,10 +144,21 @@ export default function AddUnit() {
   const [uploadStatus, setUploadStatus] = useState('');
   const [showPhotoOptions, setShowPhotoOptions] = useState(false);
   
-  // Check if all required fields are filled
+  // Check if all required fields are filled and dates are valid
   const isFormValid = () => {
-    // Always return true to keep button enabled
-    return true;
+    const finalAddress = addressInputRef.current ? addressInputRef.current.value : address;
+    const allFieldsFilled = propertyName && finalAddress && depositAmount && 
+                           contractStartDate && leaseDuration && moveInDate;
+    
+    // Date validation: Move-in date cannot be before lease start date
+    let datesValid = true;
+    if (contractStartDate && moveInDate) {
+      const leaseStart = new Date(contractStartDate);
+      const moveIn = new Date(moveInDate);
+      datesValid = moveIn >= leaseStart;
+    }
+    
+    return allFieldsFilled && datesValid;
   };
   
   // Handle Enter key for navigation
@@ -886,73 +897,69 @@ export default function AddUnit() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // If form is already valid and lease documents are uploaded, don't show validation messages
-    if (isFormValid() && leaseDocuments.length > 0) {
-      // Skip validation and proceed directly
-    } else {
-      // Clear previous errors
-      setErrors({
-        propertyName: '',
-        address: '',
-        unitNumber: '',
-        depositAmount: '',
-        contractStartDate: '',
-        leaseDuration: '',
-        moveInDate: ''
-      });
+    // Always perform validation
+    // Clear previous errors
+    setErrors({
+      propertyName: '',
+      address: '',
+      unitNumber: '',
+      depositAmount: '',
+      contractStartDate: '',
+      leaseDuration: '',
+      moveInDate: ''
+    });
 
-      // Validate required fields
-      let hasErrors = false;
-      const newErrors = {};
+    // Validate required fields
+    let hasErrors = false;
+    const newErrors = {};
+    
+    if (!propertyName) {
+      newErrors.propertyName = 'Please enter a property name';
+      hasErrors = true;
+    }
+    
+    const finalAddress = addressInputRef.current ? addressInputRef.current.value : address;
+    if (!finalAddress) {
+      newErrors.address = 'Please enter an address';
+      hasErrors = true;
+    }
+    
+    // Unit number is now optional, so we don't validate it
+    
+    if (!depositAmount) {
+      newErrors.depositAmount = 'Please enter deposit amount';
+      hasErrors = true;
+    }
+    
+    if (!contractStartDate) {
+      newErrors.contractStartDate = 'Please enter contract start date';
+      hasErrors = true;
+    }
+    
+    if (!leaseDuration) {
+      newErrors.leaseDuration = 'Please enter lease duration';
+      hasErrors = true;
+    }
+    
+    if (!moveInDate) {
+      newErrors.moveInDate = 'Please enter move-in date';
+      hasErrors = true;
+    }
+    
+    // Date validation: Move-in date cannot be before lease start date
+    if (contractStartDate && moveInDate) {
+      const leaseStart = new Date(contractStartDate);
+      const moveIn = new Date(moveInDate);
       
-      if (!propertyName) {
-        newErrors.propertyName = 'Please enter a property name';
+      if (moveIn < leaseStart) {
+        newErrors.moveInDate = 'Move-in date cannot be before lease start date';
         hasErrors = true;
       }
-      
-      const finalAddress = addressInputRef.current ? addressInputRef.current.value : address;
-      if (!finalAddress) {
-        newErrors.address = 'Please enter an address';
-        hasErrors = true;
-      }
-      
-      // Unit number is now optional, so we don't validate it
-      
-      if (!depositAmount) {
-        newErrors.depositAmount = 'Please enter deposit amount';
-        hasErrors = true;
-      }
-      
-      if (!contractStartDate) {
-        newErrors.contractStartDate = 'Please enter contract start date';
-        hasErrors = true;
-      }
-      
-      if (!leaseDuration) {
-        newErrors.leaseDuration = 'Please enter lease duration';
-        hasErrors = true;
-      }
-      
-      if (!moveInDate) {
-        newErrors.moveInDate = 'Please enter move-in date';
-        hasErrors = true;
-      }
-      
-      // Date validation: Move-in date cannot be before lease start date
-      if (contractStartDate && moveInDate) {
-        const leaseStart = new Date(contractStartDate);
-        const moveIn = new Date(moveInDate);
-        
-        if (moveIn < leaseStart) {
-          newErrors.moveInDate = 'Move-in date cannot be before lease start date';
-          hasErrors = true;
-        }
-      }
-      
-      if (hasErrors) {
-        setErrors(newErrors);
-        return;
-      }
+    }
+    
+    if (hasErrors) {
+      setErrors(newErrors);
+      return;
     }
 
     setIsSubmitting(true);

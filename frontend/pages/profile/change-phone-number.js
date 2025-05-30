@@ -6,10 +6,11 @@ import { useAuth } from '../../lib/auth';
 import { apiService } from '../../lib/api';
 
 export default function ChangePhoneNumber() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [phoneError, setPhoneError] = useState('');
 
   // Format phone number as USA format (XXX) XXX-XXXX
   const formatPhoneNumber = (value) => {
@@ -32,6 +33,10 @@ export default function ChangePhoneNumber() {
   const handlePhoneChange = (e) => {
     const formatted = formatPhoneNumber(e.target.value);
     setPhoneNumber(formatted);
+    // Clear error when user types
+    if (phoneError) {
+      setPhoneError('');
+    }
   };
 
   useEffect(() => {
@@ -39,11 +44,20 @@ export default function ChangePhoneNumber() {
       router.push('/welcome');
       return;
     }
-  }, [user, router]);
+    
+    // Refresh user data only once when component mounts to ensure we have the latest email
+    const refreshUserData = async () => {
+      await refreshUser();
+    };
+    refreshUserData();
+  }, [router, refreshUser]); // Removed user from dependencies to avoid infinite loop
 
   const handleSendCode = async () => {
+    // Clear any previous errors
+    setPhoneError('');
+    
     if (!phoneNumber.trim()) {
-      toast.error('Please enter your current phone number');
+      setPhoneError('Please enter your current phone number');
       return;
     }
 
@@ -52,13 +66,14 @@ export default function ChangePhoneNumber() {
     const userPhoneDigits = user.phone ? user.phone.replace(/\D/g, '') : '';
     
     if (phoneDigits !== userPhoneDigits) {
-      toast.error('Please enter your current phone number correctly');
+      setPhoneError('Please enter your current phone number correctly');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
+      console.log('Sending verification with user email:', user.email);
       // Send verification code to current phone via email (same as email change process)
       const response = await apiService.auth.requestEmailChangeVerification({ currentEmail: user.email });
       
@@ -76,7 +91,20 @@ export default function ChangePhoneNumber() {
       }
     } catch (error) {
       console.error('Send code error:', error);
-      toast.error(error.response?.data?.message || 'Failed to send verification code');
+      console.error('Error details:', error.response?.data);
+      
+      if (error.response?.data?.message?.includes('Email address does not match')) {
+        // Try refreshing user data and retry once
+        console.log('Email mismatch detected, refreshing user data...');
+        const refreshSuccess = await refreshUser();
+        if (refreshSuccess) {
+          toast.error('Account data refreshed. Please try again.');
+        } else {
+          toast.error('Failed to refresh account data. Please logout and login again.');
+        }
+      } else {
+        toast.error(error.response?.data?.message || 'Failed to send verification code');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -140,7 +168,9 @@ export default function ChangePhoneNumber() {
             <label className="font-['Nunito'] font-semibold text-[14px] leading-[19px] text-[#0B1420]">
               Your current phone number.
             </label>
-            <div className="flex flex-row items-center px-[20px] py-[18px] gap-[8px] bg-white border border-[#D1E7D5] rounded-[16px]">
+            <div className={`flex flex-row items-center px-[20px] py-[18px] gap-[8px] bg-white border rounded-[16px] ${
+              phoneError ? 'border-[#E95858]' : 'border-[#D1E7D5]'
+            }`}>
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M18.3083 15.275C18.3083 15.575 18.2417 15.8833 18.1 16.1833C17.9583 16.4833 17.775 16.7667 17.5333 17.0333C17.125 17.4833 16.675 17.8083 16.1667 18.0167C15.6667 18.225 15.125 18.3333 14.5417 18.3333C13.6917 18.3333 12.7833 18.1333 11.825 17.725C10.8667 17.3167 9.90833 16.7667 8.95833 16.075C8 15.375 7.09167 14.6 6.225 13.7417C5.36667 12.875 4.59167 11.9667 3.9 11.0167C3.21667 10.0667 2.66667 9.11667 2.26667 8.175C1.86667 7.225 1.66667 6.31667 1.66667 5.45C1.66667 4.88333 1.76667 4.34167 1.96667 3.84167C2.16667 3.33333 2.48333 2.86667 2.925 2.45C3.45833 1.925 4.04167 1.66667 4.65833 1.66667C4.89167 1.66667 5.125 1.71667 5.33333 1.81667C5.55 1.91667 5.74167 2.06667 5.89167 2.28333L7.825 5.00833C7.975 5.21667 8.08333 5.40833 8.15833 5.59167C8.23333 5.76667 8.275 5.94167 8.275 6.1C8.275 6.3 8.21667 6.5 8.1 6.69167C7.99167 6.88333 7.83333 7.08333 7.63333 7.28333L7 7.94167C6.90833 8.03333 6.86667 8.14167 6.86667 8.275C6.86667 8.34167 6.875 8.4 6.89167 8.46667C6.91667 8.53333 6.94167 8.58333 6.95833 8.63333C7.10833 8.91667 7.36667 9.29167 7.73333 9.75C8.10833 10.2083 8.50833 10.675 8.94167 11.1417C9.39167 11.6083 9.825 12.0417 10.2917 12.4417C10.75 12.8333 11.125 13.1083 11.4167 13.2667C11.4583 13.2833 11.5083 13.3083 11.5667 13.3333C11.6333 13.3583 11.7 13.3667 11.775 13.3667C11.9167 13.3667 12.025 13.3167 12.1167 13.225L12.75 12.6C12.9583 12.3917 13.1583 12.2333 13.35 12.1333C13.5417 12.0167 13.7333 11.9583 13.9417 11.9583C14.1 11.9583 14.2667 11.9917 14.45 12.0667C14.6333 12.1417 14.825 12.25 15.0333 12.3917L17.7917 14.3583C18.0083 14.5083 18.1583 14.6833 18.25 14.8917C18.3333 15.1 18.3833 15.3083 18.3833 15.5417" stroke="#515964" strokeWidth="1.5" strokeMiterlimit="10"/>
               </svg>
@@ -153,6 +183,9 @@ export default function ChangePhoneNumber() {
                 disabled={isSubmitting}
               />
             </div>
+            {phoneError && (
+              <p className="text-[#E95858] text-sm mt-1 ml-2">{phoneError}</p>
+            )}
           </div>
 
         </div>

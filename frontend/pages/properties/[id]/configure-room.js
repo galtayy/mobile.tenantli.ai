@@ -339,18 +339,24 @@ export default function ConfigureRoom() {
         <div className="fixed top-0 left-0 right-0 bg-[#FBF5DA] z-20">
           <div className="w-full max-w-[390px] mx-auto">
             <div className="flex flex-row items-center px-[20px] h-[65px] gap-[10px]" style={{ paddingTop: 'env(safe-area-inset-top, 20px)' }}>
-              {!returnUrl?.includes('/summary') && (
-                <Link 
-                  href={id ? `/properties/${id}/add-rooms` : '/properties'}
-                  className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
-                  aria-label="Go back"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                >
-                  <ArrowLeftIcon />
-                </Link>
-              )}
+              <button 
+                className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
+                aria-label="Go back"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  // If we have a returnUrl, use it; otherwise go to add-rooms
+                  if (returnUrl) {
+                    router.push(returnUrl);
+                  } else if (id) {
+                    router.push(`/properties/${id}/add-rooms`);
+                  } else {
+                    router.push('/properties');
+                  }
+                }}
+              >
+                <ArrowLeftIcon />
+              </button>
               <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto">
                 {isReadOnly ? 'View Room' : (returnUrl?.includes('/summary') ? 'Edit Room' : 'Room Name')}
               </h1>

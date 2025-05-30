@@ -178,10 +178,9 @@ export default function OnboardingFlow() {
       </Head>
 
       <div
-        className={`relative w-full h-screen font-['Nunito'] overflow-hidden`}
+        className={`relative w-full min-h-screen font-['Nunito'] overflow-hidden`}
         style={{
           maxWidth: '390px',
-          minHeight: '844px',
           margin: '0 auto',
           backgroundColor: currentStep === 1 ? '#FBF5DA' : undefined,
           transition: 'background-color 600ms ease-out',
@@ -201,7 +200,7 @@ export default function OnboardingFlow() {
         )}
 
         {/* Content Container */}
-        <div className="relative w-full h-full overflow-hidden" style={{ minHeight: '844px' }}>
+        <div className="relative w-full min-h-screen overflow-hidden flex flex-col">
           {/* Step 1 Content */}
           {currentStep === 1 && (
             <div
@@ -233,25 +232,30 @@ export default function OnboardingFlow() {
                 </p>
               </div>
 
-              {/* Page indicators */}
-              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-              </div>
+              {/* Bottom section with indicators and button */}
+              <div className="absolute bottom-0 left-0 right-0 pb-safe">
+                <div className="flex flex-col items-center gap-6 pb-8">
+                  {/* Page indicators */}
+                  <div className="flex flex-row items-center gap-1.5 w-[60px]">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                  </div>
 
-              {/* Let's Go button */}
-              <div className="absolute w-[350px] h-[56px] left-1/2 transform -translate-x-1/2 bottom-[40px]">
-                <button
-                  onClick={handleNext}
-                  className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-transform duration-150 active:scale-95"
-                >
-                  <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
-                    Let's Go
-                  </span>
-                </button>
+                  {/* Let's Go button */}
+                  <div className="w-[350px] h-[56px] px-5">
+                    <button
+                      onClick={handleNext}
+                      className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-transform duration-150 active:scale-95"
+                    >
+                      <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
+                        Let's Go
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -287,25 +291,30 @@ export default function OnboardingFlow() {
                 </p>
               </div>
 
-              {/* Page indicators */}
-              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-              </div>
+              {/* Bottom section with indicators and button */}
+              <div className="absolute bottom-0 left-0 right-0 pb-safe">
+                <div className="flex flex-col items-center gap-6 pb-8">
+                  {/* Page indicators */}
+                  <div className="flex flex-row items-center gap-1.5 w-[60px]">
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                  </div>
 
-              {/* Next button */}
-              <div className="absolute w-[350px] h-[56px] left-1/2 transform -translate-x-1/2 bottom-[40px]">
-                <button
-                  onClick={handleNext}
-                  className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-transform duration-150 active:scale-95"
-                >
-                  <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
-                    Next
-                  </span>
-                </button>
+                  {/* Next button */}
+                  <div className="w-[350px] h-[56px] px-5">
+                    <button
+                      onClick={handleNext}
+                      className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-transform duration-150 active:scale-95"
+                    >
+                      <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
+                        Next
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -354,25 +363,30 @@ export default function OnboardingFlow() {
                 </p>
               </div>
 
-              {/* Page indicators */}
-              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-              </div>
+              {/* Bottom section with indicators and button */}
+              <div className="absolute bottom-0 left-0 right-0 pb-safe">
+                <div className="flex flex-col items-center gap-6 pb-8">
+                  {/* Page indicators */}
+                  <div className="flex flex-row items-center gap-1.5 w-[60px]">
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                  </div>
 
-              {/* Next button */}
-              <div className="absolute w-[350px] h-[56px] left-1/2 transform -translate-x-1/2 bottom-[40px]">
-                <button
-                  onClick={handleNext}
-                  className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-transform duration-150 active:scale-95"
-                >
-                  <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
-                    Next
-                  </span>
-                </button>
+                  {/* Next button */}
+                  <div className="w-[350px] h-[56px] px-5">
+                    <button
+                      onClick={handleNext}
+                      className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-transform duration-150 active:scale-95"
+                    >
+                      <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
+                        Next
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -432,25 +446,30 @@ export default function OnboardingFlow() {
                 </p>
               </div>
 
-              {/* Page indicators */}
-              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-              </div>
+              {/* Bottom section with indicators and button */}
+              <div className="absolute bottom-0 left-0 right-0 pb-safe">
+                <div className="flex flex-col items-center gap-6 pb-8">
+                  {/* Page indicators */}
+                  <div className="flex flex-row items-center gap-1.5 w-[60px]">
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                  </div>
 
-              {/* Next button */}
-              <div className="absolute w-[350px] h-[56px] left-1/2 transform -translate-x-1/2 bottom-[40px]">
-                <button
-                  onClick={handleNext}
-                  className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-transform duration-150 active:scale-95"
-                >
-                  <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
-                    Next
-                  </span>
-                </button>
+                  {/* Next button */}
+                  <div className="w-[350px] h-[56px] px-5">
+                    <button
+                      onClick={handleNext}
+                      className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-transform duration-150 active:scale-95"
+                    >
+                      <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
+                        Next
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -491,25 +510,30 @@ export default function OnboardingFlow() {
                 </p>
               </div>
 
-              {/* Page indicators */}
-              <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-                <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
-              </div>
+              {/* Bottom section with indicators and button */}
+              <div className="absolute bottom-0 left-0 right-0 pb-safe">
+                <div className="flex flex-col items-center gap-6 pb-8">
+                  {/* Page indicators */}
+                  <div className="flex flex-row items-center gap-1.5 w-[60px]">
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
+                  </div>
 
-              {/* Start button */}
-              <div className="absolute w-[350px] h-[56px] left-1/2 transform -translate-x-1/2 bottom-[40px]">
-                <button
-                  onClick={handleNext}
-                  className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-transform duration-150 active:scale-95"
-                >
-                  <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
-                    Start
-                  </span>
-                </button>
+                  {/* Start button */}
+                  <div className="w-[350px] h-[56px] px-5">
+                    <button
+                      onClick={handleNext}
+                      className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-transform duration-150 active:scale-95"
+                    >
+                      <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
+                        Start
+                      </span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}

@@ -83,7 +83,7 @@ export default function SmoothOnboarding() {
         }}
       >
         {/* Content Container */}
-        <div className="relative w-full h-screen overflow-hidden">
+        <div className="relative w-full min-h-screen overflow-hidden flex flex-col">
           {/* Step 1 Content */}
           <div 
             className={`absolute inset-0 transition-transform duration-600 ease-out ${
@@ -127,25 +127,30 @@ export default function SmoothOnboarding() {
               </span>
             </div>
             
-            {/* Page indicators */}
-            <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-            </div>
-            
-            {/* Let's Go button */}
-            <div className="absolute w-[350px] h-[56px] left-1/2 transform -translate-x-1/2 bottom-[40px]">
-              <button 
-                onClick={handleLetsGo}
-                className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-all duration-300 hover:bg-[#0F1B2E] active:scale-95"
-              >
-                <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
-                  Let's Go
-                </span>
-              </button>
+            {/* Bottom section with indicators and button */}
+            <div className="absolute bottom-0 left-0 right-0 pb-safe">
+              <div className="flex flex-col items-center gap-6 pb-8">
+                {/* Page indicators */}
+                <div className="flex flex-row items-center gap-1.5 w-[60px]">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                </div>
+                
+                {/* Let's Go button */}
+                <div className="w-[350px] h-[56px] px-5">
+                  <button 
+                    onClick={handleLetsGo}
+                    className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-all duration-300 hover:bg-[#0F1B2E] active:scale-95"
+                  >
+                    <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
+                      Let's Go
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -178,25 +183,30 @@ export default function SmoothOnboarding() {
               </p>
             </div>
             
-            {/* Page indicators */}
-            <div className="absolute flex flex-row items-center gap-1.5 w-[60px] left-1/2 transform -translate-x-1/2 bottom-[120px]">
-              <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-              <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
-            </div>
-            
-            {/* Next button */}
-            <div className="absolute w-[350px] h-[56px] left-1/2 transform -translate-x-1/2 bottom-[40px]">
-              <button 
-                onClick={handleNextStep}
-                className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-all duration-300 hover:bg-[#0F1B2E] active:scale-95"
-              >
-                <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
-                  Next
-                </span>
-              </button>
+            {/* Bottom section with indicators and button */}
+            <div className="absolute bottom-0 left-0 right-0 pb-safe">
+              <div className="flex flex-col items-center gap-6 pb-8">
+                {/* Page indicators */}
+                <div className="flex flex-row items-center gap-1.5 w-[60px]">
+                  <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#1C2C40]"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-black bg-opacity-40"></div>
+                </div>
+                
+                {/* Next button */}
+                <div className="w-[350px] h-[56px] px-5">
+                  <button 
+                    onClick={handleNextStep}
+                    className="w-full h-full flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md transition-all duration-300 hover:bg-[#0F1B2E] active:scale-95"
+                  >
+                    <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
+                      Next
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>

@@ -7,8 +7,13 @@ import { useAuth } from '../lib/auth';
 import { apiService } from '../lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Improved Menu Icon component
+// Custom Menu Icon component - Replace with your desired SVG
 const MenuIcon = () => (
+  // TODO: Replace this SVG with your custom icon
+  // Example format:
+  // <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  //   <path d="YOUR_SVG_PATH_DATA" fill="#1C2C40"/>
+  // </svg>
   <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
     <rect x="2" y="5" width="18" height="2" rx="1" fill="#1C2C40"/>
     <rect x="2" y="10" width="18" height="2" rx="1" fill="#1C2C40"/>
@@ -505,11 +510,7 @@ export default function Home() {
               aria-label="Open menu"
               className="relative z-50 w-10 h-10 flex items-center justify-center -ml-2"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 12H21" stroke="#1C2C40" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M3 6H21" stroke="#1C2C40" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M3 18H21" stroke="#1C2C40" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <img src="/images/iconss/menu.svg" alt="Menu" className="w-6 h-6" />
             </button>
             <h1 className="font-semibold text-[18px] leading-[25px] text-center text-[#0B1420] absolute left-0 right-0 mx-auto pointer-events-none">
               My Home
