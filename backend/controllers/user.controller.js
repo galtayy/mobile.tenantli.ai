@@ -39,7 +39,19 @@ exports.updateProfile = async (req, res) => {
     const userId = req.user.id;
     const { name, email, phone, role } = req.body;
     
-    // Email kullanımda mı kontrol et
+    // Only update fields that are provided
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (phone !== undefined) updateData.phone = phone;
+    if (role !== undefined) updateData.role = role;
+    
+    // Check if any field is provided for update
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ message: 'Güncellenecek alan belirtilmedi' });
+    }
+    
+    // Email kullanımda mı kontrol et (sadece email güncelleniyorsa)
     if (email) {
       const existingUser = await User.findByEmail(email);
       if (existingUser && existingUser.id !== userId) {
@@ -48,7 +60,7 @@ exports.updateProfile = async (req, res) => {
     }
     
     // Kullanıcı bilgilerini güncelle
-    const updated = await User.update(userId, { name, email, phone, role });
+    const updated = await User.update(userId, updateData);
     
     if (!updated) {
       return res.status(400).json({ message: 'Profil güncellenemedi' });
@@ -66,7 +78,8 @@ exports.updateProfile = async (req, res) => {
         phone: user.phone,
         role: user.role,
         created_at: user.created_at,
-        updated_at: user.updated_at
+        updated_at: user.updated_at,
+        is_verified: user.is_verified
       }
     });
   } catch (error) {

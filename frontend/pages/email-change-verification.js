@@ -118,7 +118,7 @@ export default function EmailChangeVerification() {
     
     const code = verificationCode.join('');
     if (code.length !== 4) {
-      setError('Please enter a 4-digit verification code.');
+      setError('Hmm, that code isn\'t right.');
       return;
     }
 
@@ -136,15 +136,15 @@ export default function EmailChangeVerification() {
           console.log('Step 1 verification successful, redirecting to new email page');
           router.push('/profile/new-email');
         } else {
-          setError('Invalid verification code. Please try again.');
+          setError('Hmm, that code isn\'t right.');
         }
       }
     } catch (error) {
       console.error('Email change verification failed:', error);
       if (error.response && error.response.data) {
-        setError(error.response.data.message || 'Invalid verification code. Please try again.');
+        setError(error.response.data.message || 'Hmm, that code isn\'t right.');
       } else {
-        setError('Invalid verification code. Please try again.');
+        setError('Hmm, that code isn\'t right.');
       }
     } finally {
       setIsSubmitting(false);
@@ -204,6 +204,10 @@ export default function EmailChangeVerification() {
             min-height: 100vh;
             margin: 0;
             padding: 0;
+          }
+          /* Hide toast notifications on this page */
+          .Toastify__toast-container {
+            display: none !important;
           }
         `}</style>
       </Head>
@@ -282,11 +286,8 @@ export default function EmailChangeVerification() {
                   ))}
                 </div>
                 {error && (
-                  <div className="mt-4 w-full max-w-[300px] bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600 flex items-center justify-center">
-                    <svg className="w-5 h-5 mr-2 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                    <span className="font-medium">{error}</span>
+                  <div className="mt-4 w-full max-w-[300px] flex items-center justify-center">
+                    <span className="font-medium text-sm" style={{ color: '#E95858' }}>{error}</span>
                   </div>
                 )}
               </div>

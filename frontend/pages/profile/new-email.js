@@ -53,16 +53,12 @@ export default function NewEmail() {
     setIsSubmitting(true);
 
     try {
-      // Update email directly
+      // Update only email using partial update
       const response = await apiService.user.updateProfile({ 
-        name: user.name,
-        email: newEmail,
-        phone: user.phone,
-        role: user.role 
+        email: newEmail
       });
       
       if (response.data) {
-        toast.success('Email updated successfully!');
         // Navigate to success page
         router.push('/email-change-success');
       }
@@ -96,6 +92,10 @@ export default function NewEmail() {
           * {
             scrollbar-width: none;
             -ms-overflow-style: none;
+          }
+          /* Hide toast notifications on this page */
+          .Toastify__toast-container {
+            display: none !important;
           }
         `}</style>
       </Head>
@@ -168,10 +168,6 @@ export default function NewEmail() {
           >
             {isSubmitting ? 'Sending...' : 'Save'}
           </button>
-          {/* Bottom indicator line */}
-          <div className="flex justify-center mt-[12px]">
-            <div className="w-[138px] h-[4px] bg-[#1C2C40] rounded-[24px]"></div>
-          </div>
         </div>
       </div>
     </div>

@@ -6,10 +6,33 @@ import { useAuth } from '../../lib/auth';
 import { apiService } from '../../lib/api';
 
 export default function AddPhoneNumber() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const router = useRouter();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Format phone number to US format: (123) 456-7890
+  const formatPhoneNumber = (value) => {
+    if (!value) return value;
+    
+    // Remove all non-digit characters
+    const phoneNumber = value.replace(/[^\d]/g, '');
+    
+    // Take only first 10 digits
+    const phoneNumberLength = phoneNumber.length;
+    
+    // Return if empty
+    if (phoneNumberLength < 1) return '';
+    
+    // Format the phone number based on length
+    if (phoneNumberLength < 4) {
+      return `(${phoneNumber}`;
+    } else if (phoneNumberLength < 7) {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+    } else {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -26,19 +49,27 @@ export default function AddPhoneNumber() {
       return;
     }
 
+    // Validate phone number (should have 10 digits)
+    const phoneDigits = phoneNumber.replace(/\D/g, '');
+    if (phoneDigits.length !== 10) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      // Update phone number directly using updateProfile
+      // Update only phone number using partial update
       const response = await apiService.user.updateProfile({ 
-        name: user.name,
-        email: user.email,
-        phone: phoneNumber,
-        role: user.role 
+        phone: phoneDigits
       });
       
       if (response.data) {
-        toast.success('Phone number added successfully!');
+        // Refresh user data in auth context
+        if (refreshUser) {
+          await refreshUser();
+        }
+        
         router.push('/profile');
       }
     } catch (error) {
@@ -115,8 +146,8 @@ export default function AddPhoneNumber() {
                 <input
                   type="tel"
                   value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  placeholder="Enter your phone number"
+                  onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
+                  placeholder="(123) 456-7890"
                   className="flex-1 font-['Nunito'] font-bold text-[14px] leading-[19px] text-[#0B1420] bg-transparent outline-none placeholder-[#A8B2BC]"
                   disabled={isSubmitting}
                 />

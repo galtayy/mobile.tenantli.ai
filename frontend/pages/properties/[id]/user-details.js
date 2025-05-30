@@ -55,7 +55,7 @@ const InfoCircleIcon = () => (
 );
 
 export default function UserDetails() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const router = useRouter();
   const { id, propertyId } = router.query;
   const [name, setName] = useState('');
@@ -357,6 +357,12 @@ export default function UserDetails() {
           console.log('Updating user profile in DB:', updates);
           await apiService.user.updateProfile(updates);
           console.log('User profile updated successfully');
+          
+          // Refresh the user data in auth context
+          if (refreshUser) {
+            await refreshUser();
+            console.log('User data refreshed in auth context');
+          }
         } catch (updateError) {
           console.error('Error updating user profile:', updateError);
           // Continue even if profile update fails

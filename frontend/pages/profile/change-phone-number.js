@@ -11,6 +11,29 @@ export default function ChangePhoneNumber() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Format phone number as USA format (XXX) XXX-XXXX
+  const formatPhoneNumber = (value) => {
+    // Remove all non-numeric characters
+    const cleaned = value.replace(/\D/g, '');
+    
+    // Limit to 10 digits
+    const limited = cleaned.slice(0, 10);
+    
+    // Format based on length
+    if (limited.length <= 3) {
+      return limited;
+    } else if (limited.length <= 6) {
+      return `(${limited.slice(0, 3)}) ${limited.slice(3)}`;
+    } else {
+      return `(${limited.slice(0, 3)}) ${limited.slice(3, 6)}-${limited.slice(6)}`;
+    }
+  };
+
+  const handlePhoneChange = (e) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setPhoneNumber(formatted);
+  };
+
   useEffect(() => {
     if (!user) {
       router.push('/welcome');
@@ -24,7 +47,11 @@ export default function ChangePhoneNumber() {
       return;
     }
 
-    if (phoneNumber !== user.phone) {
+    // Compare only the digits (remove formatting)
+    const phoneDigits = phoneNumber.replace(/\D/g, '');
+    const userPhoneDigits = user.phone ? user.phone.replace(/\D/g, '') : '';
+    
+    if (phoneDigits !== userPhoneDigits) {
       toast.error('Please enter your current phone number correctly');
       return;
     }
@@ -36,7 +63,7 @@ export default function ChangePhoneNumber() {
       const response = await apiService.auth.requestEmailChangeVerification({ currentEmail: user.email });
       
       if (response.data.success) {
-        toast.success('Verification code sent to your email address');
+        //toast.success('Verification code sent to your email address');
         // Navigate to phone change verification page for identity confirmation
         router.push({
           pathname: '/phone-change-verification',
@@ -120,8 +147,8 @@ export default function ChangePhoneNumber() {
               <input
                 type="tel"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="Enter your current phone number"
+                onChange={handlePhoneChange}
+                placeholder="Phone Number"
                 className="flex-1 font-['Nunito'] font-bold text-[14px] leading-[19px] text-[#0B1420] bg-transparent outline-none placeholder-[#A8B2BC]"
                 disabled={isSubmitting}
               />

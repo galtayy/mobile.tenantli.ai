@@ -72,7 +72,6 @@ export default function NewPhoneNumber() {
       });
       
       if (response.data) {
-        toast.success('Phone number updated successfully!');
         
         // Update the user context with new phone number
         try {

@@ -147,15 +147,15 @@ export default function EmailVerification() {
             router.push('/verification-success?type=email-change-step1');
           } else {
             console.log('Step 1 verification failed:', response.data);
-            setError('Invalid verification code. Please try again.');
+            setError('Hmm, that code isn’t right. . Please try again.');
           }
         } catch (error) {
           console.error('Step 1 verification failed:', error);
           if (error.response && error.response.data) {
             console.log('Error response:', error.response.data);
-            setError(error.response.data.message || 'Invalid verification code. Please try again.');
+            setError(error.response.data.message || 'Hmm, that code isn’t right. . Please try again.');
           } else {
-            setError('Invalid verification code. Please try again.');
+            setError('Hmm, that code isn’t right. . Please try again.');
           }
         }
       } else if (verificationType === 'email-change') {
@@ -177,7 +177,7 @@ export default function EmailVerification() {
           router.push('/verification-success?type=email-change');
         } else {
           console.error('Email change verification failed:', result);
-          setError(result.message || 'Invalid verification code. Please try again.');
+          setError(result.message || 'Hmm, that code isn’t right. . Please try again.');
         }
       } else {
         // Regular registration verification
@@ -193,12 +193,12 @@ export default function EmailVerification() {
         } else {
           // If verification fails, show error
           console.error('Verification failed:', result);
-          setError('Invalid verification code. Please try again.');
+          setError('Hmm, that code isn’t right. . Please try again.');
         }
       }
     } catch (error) {
       console.error('Verification error:', error);
-      setError('Invalid verification code. Please try again.');
+      setError('Hmm, that code isn’t right. . Please try again.');
     } finally {
       // Stop loading state
       setIsSubmitting(false);

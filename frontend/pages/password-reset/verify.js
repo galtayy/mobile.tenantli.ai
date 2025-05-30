@@ -150,7 +150,7 @@ export default function VerifyCode() {
         router.push('/password-reset/new-password');
       } else {
         // If response is not successful, show error
-        setError('Invalid verification code. Please try again.');
+        setError('Hmm, that code isn’t right. . Please try again.');
       }
     } catch (error) {
       console.error('Verification error:', error);
@@ -170,7 +170,7 @@ export default function VerifyCode() {
       }
       
       // Set error message
-      setError('Invalid verification code. Please try again.');
+      setError('Hmm, that code isn’t right. . Please try again.');
     } finally {
       setIsSubmitting(false);
     }

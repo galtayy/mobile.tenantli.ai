@@ -393,7 +393,7 @@ exports.verifyResetCode = async (req, res) => {
     const user = await User.findByEmail(email);
     if (!user) {
       // Security: Don't reveal if user exists or not
-      return res.status(400).json({ message: 'Invalid verification code' });
+      return res.status(400).json({ message: 'Hmm, that code isn’t right. ' });
     }
     
     // Get reset code from database
@@ -437,7 +437,7 @@ exports.verifyResetCode = async (req, res) => {
     
     // Verify that codes match
     if (verificationCode !== reset_code) {
-      return res.status(400).json({ message: 'Invalid verification code' });
+      return res.status(400).json({ message: 'Hmm, that code isn’t right. ' });
     }
     
     // Generate secure reset token
@@ -490,7 +490,7 @@ exports.resetPassword = async (req, res) => {
     const user = await User.findByEmail(email);
     if (!user) {
       // Security: Don't reveal if user exists or not
-      return res.status(400).json({ message: 'Invalid verification code' });
+      return res.status(400).json({ message: 'Hmm, that code isn’t right. ' });
     }
     
     // Hash the provided token to match stored token
@@ -629,7 +629,7 @@ exports.requestEmailChangeVerification = async (req, res) => {
     
     res.json({
       success: true,
-      message: 'Verification code sent to your current email address',
+      //message: 'Verification code sent to your current email address',
       emailSent: emailResult.success
     });
   } catch (error) {
@@ -780,7 +780,7 @@ exports.verifyEmailChange = async (req, res) => {
     
     // Verify that codes match
     if (code !== email_change_code) {
-      return res.status(400).json({ message: 'Invalid verification code' });
+      return res.status(400).json({ message: 'Hmm, that code isn’t right. ' });
     }
     
     // Check again if new email is available (race condition protection)

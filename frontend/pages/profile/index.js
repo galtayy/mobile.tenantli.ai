@@ -6,10 +6,12 @@ import { useAuth } from '../../lib/auth';
 import { apiService } from '../../lib/api';
 
 export default function Profile() {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshUser } = useAuth();
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [editedName, setEditedName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -29,16 +31,61 @@ export default function Profile() {
         try {
           const response = await apiService.auth.getUser();
           setCurrentUser(response.data);
+          setEditedName(response.data.name || '');
         } catch (error) {
           console.error('Error fetching fresh user data:', error);
           // Fallback to auth context user
           setCurrentUser(user);
+          setEditedName(user.name || '');
         }
       }
     };
 
     fetchUserData();
   }, [user, loading]);
+
+  // Handle name edit
+  const handleEditClick = () => {
+    setIsEditing(true);
+    setEditedName(currentUser?.name || '');
+  };
+
+  // Handle save
+  const handleSave = async () => {
+    if (!editedName.trim()) {
+      alert('Please enter a valid name');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      // Log the data being sent
+      console.log('Sending name update:', { name: editedName.trim() });
+      
+      const response = await apiService.user.updateProfile({ name: editedName.trim() });
+      console.log('Update response:', response.data);
+      
+      // Refresh user data
+      if (refreshUser) {
+        await refreshUser();
+      }
+      
+      // Update local state
+      setCurrentUser(prev => ({ ...prev, name: editedName.trim() }));
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating name:', error.response ? error.response.data : error.message);
+      alert('Failed to update name. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle cancel
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditedName(currentUser?.name || '');
+  };
 
   if (loading) {
     return (
@@ -154,15 +201,43 @@ export default function Profile() {
 
           {/* User Information Fields */}
           <div className="flex flex-col gap-[16px] mb-[32px]">
-            {/* Name Field */}
-            <div className="flex flex-row items-center px-[20px] py-[18px] gap-[8px] bg-white border border-[#D1E7D5] rounded-[16px]">
+            {/* Name Field - Editable */}
+            <div 
+              className={`flex flex-row items-center px-[20px] py-[18px] gap-[8px] bg-white border rounded-[16px] transition-all ${
+                isEditing ? 'border-[#1C2C40]' : 'border-[#D1E7D5] cursor-pointer hover:border-[#1C2C40]'
+              }`}
+              onClick={!isEditing ? handleEditClick : undefined}
+            >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M10 10C12.0711 10 13.75 8.32107 13.75 6.25C13.75 4.17893 12.0711 2.5 10 2.5C7.92893 2.5 6.25 4.17893 6.25 6.25C6.25 8.32107 7.92893 10 10 10Z" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M17.1583 18.125C17.1583 15.2667 13.9333 12.9167 10 12.9167C6.06667 12.9167 2.84167 15.2667 2.84167 18.125" stroke="#515964" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span className="flex-1 font-['Nunito'] font-bold text-[14px] leading-[19px] text-[#515964]">
-                {currentUser?.name || 'User Name'}
-              </span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editedName}
+                  onChange={(e) => setEditedName(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSave();
+                    }
+                  }}
+                  className="flex-1 font-['Nunito'] font-bold text-[14px] leading-[19px] text-[#515964] outline-none bg-transparent"
+                  placeholder="Enter your name"
+                  autoFocus
+                  onClick={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <span className="flex-1 font-['Nunito'] font-bold text-[14px] leading-[19px] text-[#515964]">
+                  {currentUser?.name || 'User Name'}
+                </span>
+              )}
+              {!isEditing && (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8.83398 2.40004L3.36732 8.1267C3.16065 8.34671 2.96065 8.78004 2.92065 9.0867L2.67398 11.3067C2.58065 12.0867 3.14065 12.62 3.91398 12.48L6.12065 12.12C6.42732 12.0667 6.85398 11.8467 7.06065 11.62L12.5273 5.8934C13.4807 4.8934 13.9273 3.7534 12.4073 2.2734C10.894 0.806706 9.78732 1.40004 8.83398 2.40004Z" stroke="#515964" strokeWidth="1.2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M7.92725 3.36658C8.21391 5.20658 9.71391 6.65991 11.6272 6.85991" stroke="#515964" strokeWidth="1.2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
             </div>
 
             {/* Email Field */}
@@ -176,8 +251,13 @@ export default function Profile() {
               </span>
             </div>
 
-            {/* Phone Field (if available) */}
-            <div className="flex flex-row items-center px-[20px] py-[18px] gap-[8px] bg-white border border-[#D1E7D5] rounded-[16px]">
+            {/* Phone Field - Clickable if no phone number */}
+            <div 
+              className={`flex flex-row items-center px-[20px] py-[18px] gap-[8px] bg-white border border-[#D1E7D5] rounded-[16px] transition-all ${
+                !currentUser?.phone ? 'cursor-pointer hover:border-[#1C2C40]' : ''
+              }`}
+              onClick={!currentUser?.phone ? () => router.push('/profile/add-phone-number') : undefined}
+            >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M18.3083 15.275C18.3083 15.575 18.2417 15.8833 18.1 16.1833C17.9583 16.4833 17.775 16.7667 17.5333 17.0333C17.125 17.4833 16.675 17.8083 16.1667 18.0167C15.6667 18.225 15.125 18.3333 14.5417 18.3333C13.6917 18.3333 12.7833 18.1333 11.825 17.725C10.8667 17.3167 9.90833 16.7667 8.95833 16.075C8 15.375 7.09167 14.6 6.225 13.7417C5.36667 12.875 4.59167 11.9667 3.9 11.0167C3.21667 10.0667 2.66667 9.11667 2.26667 8.175C1.86667 7.225 1.66667 6.31667 1.66667 5.45C1.66667 4.88333 1.76667 4.34167 1.96667 3.84167C2.16667 3.33333 2.48333 2.86667 2.925 2.45C3.45833 1.925 4.04167 1.66667 4.65833 1.66667C4.89167 1.66667 5.125 1.71667 5.33333 1.81667C5.55 1.91667 5.74167 2.06667 5.89167 2.28333L7.825 5.00833C7.975 5.21667 8.08333 5.40833 8.15833 5.59167C8.23333 5.76667 8.275 5.94167 8.275 6.1C8.275 6.3 8.21667 6.5 8.1 6.69167C7.99167 6.88333 7.83333 7.08333 7.63333 7.28333L7 7.94167C6.90833 8.03333 6.86667 8.14167 6.86667 8.275C6.86667 8.34167 6.875 8.4 6.89167 8.46667C6.91667 8.53333 6.94167 8.58333 6.95833 8.63333C7.10833 8.91667 7.36667 9.29167 7.73333 9.75C8.10833 10.2083 8.50833 10.675 8.94167 11.1417C9.39167 11.6083 9.825 12.0417 10.2917 12.4417C10.75 12.8333 11.125 13.1083 11.4167 13.2667C11.4583 13.2833 11.5083 13.3083 11.5667 13.3333C11.6333 13.3583 11.7 13.3667 11.775 13.3667C11.9167 13.3667 12.025 13.3167 12.1167 13.225L12.75 12.6C12.9583 12.3917 13.1583 12.2333 13.35 12.1333C13.5417 12.0167 13.7333 11.9583 13.9417 11.9583C14.1 11.9583 14.2667 11.9917 14.45 12.0667C14.6333 12.1417 14.825 12.25 15.0333 12.3917L17.7917 14.3583C18.0083 14.5083 18.1583 14.6833 18.25 14.8917C18.3333 15.1 18.3833 15.3083 18.3833 15.5417" stroke="#515964" strokeWidth="1.5" strokeMiterlimit="10"/>
               </svg>
@@ -194,6 +274,26 @@ export default function Profile() {
               </span>
             </div>
           </div>
+
+          {/* Save/Cancel Buttons - Show when editing */}
+          {isEditing && (
+            <div className="flex gap-[12px] mb-[32px]">
+              <button
+                onClick={handleCancel}
+                className="flex-1 h-[48px] border border-[#D1E7D5] rounded-[16px] font-['Nunito'] font-bold text-[16px] text-[#515964] hover:bg-gray-50 transition-colors"
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="flex-1 h-[48px] bg-[#1C2C40] rounded-[16px] font-['Nunito'] font-bold text-[16px] text-[#D1E7E2] hover:bg-[#243242] transition-colors disabled:opacity-50"
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          )}
 
           {/* Security Section */}
           <div className="flex flex-col gap-[16px]">

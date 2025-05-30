@@ -111,30 +111,33 @@ export default function OnboardingFlow() {
     return (
       <section
         id="scene"
-        className={clsx('relative w-screen h-[50vh] max-w-[430px] mx-auto overflow-hidden transition-colors duration-1000')}
+        className={clsx('relative w-full h-[400px] max-w-[390px] mx-auto overflow-hidden transition-colors duration-1000')}
       >
-        {/* line */}
-        <div className={clsx('absolute w-[93vw] h-[0.2vw] bg-gray-400 bottom-[13vw]')} />
-        {/* paint 1 */}
-        <div className={clsx('absolute w-[18vw] h-[18vw] bg-[url("/onboarding/small_painting.png")] bg-contain bg-no-repeat bg-center transition-transform duration-1000 ease-[cubic-bezier(0.35,0.84,0.33,1)] left-[6vw] top-[12vw] origin-[100%_0%]', play && 'rotate-[-20deg]')} />
-        {/* paint 2 */}
-        <div className={clsx('absolute w-[18vw] h-[18vw] bg-[url("/onboarding/small_painting.png")] bg-contain bg-no-repeat bg-center transition-transform duration-1000 ease-[cubic-bezier(0.35,0.84,0.33,1)] left-[6vw] top-[34vw] origin-[0%_50%]', play && 'rotate-[30deg]')} />
-        {/* big painting */}
-        <div className={clsx('absolute w-[32vw] h-[24vw] bg-[url("/onboarding/big_painting.png")] bg-contain bg-no-repeat bg-center left-[55vw] top-[10vw] origin-[100%_0%] transition-transform duration-1000 ease-[cubic-bezier(0.35,0.84,0.33,1)]', play && 'rotate-[-30deg]')} />
-        {/* lamb */}
-        <div className={clsx('absolute w-[32vw] h-[42vw] bg-[url("/onboarding/lamb.png")] bg-contain bg-no-repeat bg-center left-[23.4vw] top-[17.5vw] origin-[50%_57%] z-[1] transition-transform duration-1000 ease-[cubic-bezier(0.35,0.84,0.33,1)]', play && 'rotate-[45deg]')} />
-        <div className="absolute w-[14vw] h-[64vw] bg-[url('/onboarding/lamb_stand.png')] bg-contain bg-no-repeat bg-center left-[32vw] bottom-[13vw]" />
-        {/* seats */}
-        <div className={clsx('absolute w-[55vw] h-[48vw] bg-[url("/onboarding/seat_left.png")] bg-contain bg-no-repeat bg-center right-[10vw] bottom-[26vw] z-[2] transition-transform duration-1000 ease-[cubic-bezier(0.35,0.84,0.33,1)]', play && 'rotate-[-8deg]')} />
-        <div className="absolute w-[47vw] h-[62vw] bg-[url('/onboarding/seat_right.png')] bg-contain bg-no-repeat bg-center right-[6vw] bottom-[13vw] origin-[50%_90%] z-[2]" />
-        <div className="absolute w-[35vw] h-[20vw] bg-[url('/onboarding/vase.png')] bg-contain bg-no-repeat bg-center left-[0vw] bottom-[13vw] z-[1]" />
-        {/* leaves */}
-        <div className={clsx('absolute w-[0.1vw] h-[12vw] bg-[#25414e] left-[14vw] bottom-[30vw] origin-bottom transition-transform duration-1000 ease-in-out', play && 'rotate-[-20deg]')} />
-        <div className={clsx('absolute w-[0.1vw] h-[12vw] bg-[#25414e] left-[21vw] bottom-[26vw] origin-bottom transition-transform duration-1000 ease-in-out', play && 'rotate-[20deg]')} />
-        <div className="absolute w-[0.1vw] h-[12vw] bg-[#25414e] left-[14vw] bottom-[21vw] origin-bottom transition-transform duration-1000 ease-in-out" />
-        <div className={clsx('absolute w-[18vw] h-[18vw] bg-[url("/onboarding/leaf_2.png")] bg-contain bg-no-repeat bg-center left-[4vw] bottom-[32vw] rotate-[20deg] scale-[1.2] z-[2] transition-transform duration-1000 ease-in-out', play && 'translate-x-[5vw] translate-y-[19vw] rotate-[75deg]')} />
-         { <div className={clsx('absolute w-[12vw] h-[12vw] bg-[url("/onboarding/leaf_1.png")] bg-contain bg-no-repeat bg-center left-[17vw] bottom-[30vw] rotate-[-30deg] scale-[1.2] z-[2] transition-transform duration-1000 ease-in-out', play && 'translate-x-[-10vw] translate-y-[17vw] rotate-[-85deg]')} /> }
-       <div className={clsx('absolute w-[12vw] h-[12vw] bg-[url("/onboarding/leaf_1.png")] bg-contain bg-no-repeat bg-center left-[8vw] bottom-[25vw] rotate-[20deg] scale-[1.2] z-[2] transition-transform duration-1000 ease-in-out', play && 'translate-x-[12vw] translate-y-[12vw] rotate-[75deg]')} />
+        {/* Container with fixed aspect ratio */}
+        <div className="absolute inset-0 w-full h-full" style={{ maxWidth: '390px' }}>
+          {/* line */}
+          <div className={clsx('absolute w-[362px] h-[1px] bg-gray-400 bottom-[51px] left-0')} />
+          {/* paint 1 */}
+          <div className={clsx('absolute w-[70px] h-[70px] bg-[url("/onboarding/small_painting.png")] bg-contain bg-no-repeat bg-center transition-transform duration-1000 ease-[cubic-bezier(0.35,0.84,0.33,1)] left-[23px] top-[47px] origin-[100%_0%]', play && 'rotate-[-20deg]')} />
+          {/* paint 2 */}
+          <div className={clsx('absolute w-[70px] h-[70px] bg-[url("/onboarding/small_painting.png")] bg-contain bg-no-repeat bg-center transition-transform duration-1000 ease-[cubic-bezier(0.35,0.84,0.33,1)] left-[23px] top-[133px] origin-[0%_50%]', play && 'rotate-[30deg]')} />
+          {/* big painting */}
+          <div className={clsx('absolute w-[125px] h-[94px] bg-[url("/onboarding/big_painting.png")] bg-contain bg-no-repeat bg-center left-[215px] top-[39px] origin-[100%_0%] transition-transform duration-1000 ease-[cubic-bezier(0.35,0.84,0.33,1)]', play && 'rotate-[-30deg]')} />
+          {/* lamb */}
+          <div className={clsx('absolute w-[125px] h-[164px] bg-[url("/onboarding/lamb.png")] bg-contain bg-no-repeat bg-center left-[91px] top-[68px] origin-[50%_57%] z-[1] transition-transform duration-1000 ease-[cubic-bezier(0.35,0.84,0.33,1)]', play && 'rotate-[45deg]')} />
+          <div className="absolute w-[55px] h-[250px] bg-[url('/onboarding/lamb_stand.png')] bg-contain bg-no-repeat bg-center left-[125px] bottom-[51px]" />
+          {/* seats */}
+          <div className={clsx('absolute w-[215px] h-[187px] bg-[url("/onboarding/seat_left.png")] bg-contain bg-no-repeat bg-center right-[39px] bottom-[101px] z-[2] transition-transform duration-1000 ease-[cubic-bezier(0.35,0.84,0.33,1)]', play && 'rotate-[-8deg]')} />
+          <div className="absolute w-[183px] h-[242px] bg-[url('/onboarding/seat_right.png')] bg-contain bg-no-repeat bg-center right-[23px] bottom-[51px] origin-[50%_90%] z-[2]" />
+          <div className="absolute w-[137px] h-[78px] bg-[url('/onboarding/vase.png')] bg-contain bg-no-repeat bg-center left-[0px] bottom-[51px] z-[1]" />
+          {/* leaves */}
+          <div className={clsx('absolute w-[1px] h-[47px] bg-[#25414e] left-[55px] bottom-[117px] origin-bottom transition-transform duration-1000 ease-in-out', play && 'rotate-[-20deg]')} />
+          <div className={clsx('absolute w-[1px] h-[47px] bg-[#25414e] left-[82px] bottom-[101px] origin-bottom transition-transform duration-1000 ease-in-out', play && 'rotate-[20deg]')} />
+          <div className="absolute w-[1px] h-[47px] bg-[#25414e] left-[55px] bottom-[82px] origin-bottom transition-transform duration-1000 ease-in-out" />
+          <div className={clsx('absolute w-[70px] h-[70px] bg-[url("/onboarding/leaf_2.png")] bg-contain bg-no-repeat bg-center left-[16px] bottom-[125px] rotate-[20deg] scale-[1.2] z-[2] transition-transform duration-1000 ease-in-out', play && 'translate-x-[20px] translate-y-[74px] rotate-[75deg]')} />
+          <div className={clsx('absolute w-[47px] h-[47px] bg-[url("/onboarding/leaf_1.png")] bg-contain bg-no-repeat bg-center left-[66px] bottom-[117px] rotate-[-30deg] scale-[1.2] z-[2] transition-transform duration-1000 ease-in-out', play && 'translate-x-[-39px] translate-y-[66px] rotate-[-85deg]')} />
+          <div className={clsx('absolute w-[47px] h-[47px] bg-[url("/onboarding/leaf_1.png")] bg-contain bg-no-repeat bg-center left-[31px] bottom-[98px] rotate-[20deg] scale-[1.2] z-[2] transition-transform duration-1000 ease-in-out', play && 'translate-x-[47px] translate-y-[47px] rotate-[75deg]')} />
+        </div>
       </section>
     );
   };
@@ -175,9 +178,10 @@ export default function OnboardingFlow() {
       </Head>
 
       <div
-        className={`relative w-full min-h-screen font-['Nunito']`}
+        className={`relative w-full h-screen font-['Nunito'] overflow-hidden`}
         style={{
           maxWidth: '390px',
+          minHeight: '844px',
           margin: '0 auto',
           backgroundColor: currentStep === 1 ? '#FBF5DA' : undefined,
           transition: 'background-color 600ms ease-out',
@@ -197,7 +201,7 @@ export default function OnboardingFlow() {
         )}
 
         {/* Content Container */}
-        <div className="relative w-full h-screen overflow-hidden">
+        <div className="relative w-full h-full overflow-hidden" style={{ minHeight: '844px' }}>
           {/* Step 1 Content */}
           {currentStep === 1 && (
             <div
@@ -210,10 +214,9 @@ export default function OnboardingFlow() {
 
               {/* Main illustration */}
               <div
-                className="absolute top-[105px] left-0 right-0 px-4"
+                className="absolute top-[105px] left-0 right-0 flex justify-center"
               >
-
-                <div className="relative">
+                <div className="relative w-full max-w-[390px]">
                   <StepContent step={1} />
                 </div>
               </div>
@@ -265,9 +268,9 @@ export default function OnboardingFlow() {
 
               {/* Main illustration */}
               <div
-                className="absolute top-[105px] left-0 right-0 px-4"
+                className="absolute top-[105px] left-0 right-0 flex justify-center"
               >
-                <div className="relative">
+                <div className="relative w-full max-w-[390px]">
                   <StepContent step={2} />
                 </div>
               </div>

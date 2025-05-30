@@ -1077,16 +1077,31 @@ export default function PropertySummary() {
                     key={roomId} 
                     className="px-4 py-3 flex items-start justify-between cursor-pointer hover:bg-gray-50 transition-colors duration-200 border-t border-[#ECF0F5] first:border-t-0"
                     onClick={() => {
-                      router.push({
-                        pathname: `/properties/${id}/configure-room`,
-                        query: {
-                          roomId: roomId,
-                          roomName: displayName,
-                          roomType: roomType,
-                          returnUrl: `/properties/${id}/summary${isReportAlreadySent ? '?from=walkthrough' : ''}`,
-                          isReport: isReportAlreadySent ? 'true' : 'false'
-                        }
-                      });
+                      if (isReportAlreadySent) {
+                        // If report is already sent, show read-only room view
+                        router.push({
+                          pathname: `/properties/${id}/room-view`,
+                          query: {
+                            roomId: roomId,
+                            roomName: displayName,
+                            roomType: roomType,
+                            returnUrl: `/properties/${id}/summary?from=walkthrough`
+                          }
+                        });
+                      } else {
+                        // Otherwise, allow editing
+                        router.push({
+                          pathname: `/properties/${id}/configure-room`,
+                          query: {
+                            roomId: roomId,
+                            roomName: displayName,
+                            roomType: roomType,
+                            returnUrl: `/properties/${id}/summary`,
+                            isReport: 'false',
+                            readonly: 'false'
+                          }
+                        });
+                      }
                     }}
                   >
                     <div className="flex-1">

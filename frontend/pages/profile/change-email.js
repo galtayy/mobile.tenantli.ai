@@ -50,7 +50,6 @@ export default function ChangeEmail() {
       const response = await apiService.auth.requestEmailChangeVerification({ currentEmail: email });
       
       if (response.data.success) {
-        toast.success('Verification code sent to your current email address');
         // Navigate to email verification page for identity confirmation
         router.push({
           pathname: '/email-change-verification',
@@ -91,6 +90,10 @@ export default function ChangeEmail() {
           * {
             scrollbar-width: none;
             -ms-overflow-style: none;
+          }
+          /* Hide toast notifications on this page */
+          .Toastify__toast-container {
+            display: none !important;
           }
         `}</style>
       </Head>

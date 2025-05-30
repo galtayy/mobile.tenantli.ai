@@ -60,20 +60,44 @@ class User {
   // Kullanıcı güncelleme
   static async update(id, userData) {
     try {
-      const query = `
-        UPDATE users 
-        SET name = ?, email = ?, phone = ?, role = ?, updated_at = CURRENT_TIMESTAMP 
-        WHERE id = ?
-      `;
-
-      const [result] = await db.execute(query, [
-        userData.name,
-        userData.email,
-        userData.phone,
-        userData.role,
-        id
-      ]);
-
+      // Build dynamic query based on provided fields
+      const updates = [];
+      const values = [];
+      
+      if (userData.name !== undefined) {
+        updates.push('name = ?');
+        values.push(userData.name);
+      }
+      
+      if (userData.email !== undefined) {
+        updates.push('email = ?');
+        values.push(userData.email);
+      }
+      
+      if (userData.phone !== undefined) {
+        updates.push('phone = ?');
+        values.push(userData.phone);
+      }
+      
+      if (userData.role !== undefined) {
+        updates.push('role = ?');
+        values.push(userData.role);
+      }
+      
+      // Always update the timestamp
+      updates.push('updated_at = CURRENT_TIMESTAMP');
+      
+      // Add the id parameter at the end
+      values.push(id);
+      
+      // If no fields to update, return false
+      if (updates.length === 1) { // Only timestamp update
+        return false;
+      }
+      
+      const query = `UPDATE users SET ${updates.join(', ')} WHERE id = ?`;
+      
+      const [result] = await db.execute(query, values);
       return result.affectedRows > 0;
     } catch (error) {
       throw error;

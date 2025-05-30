@@ -416,76 +416,80 @@ export default function Home() {
             <div className="w-full flex flex-col items-center p-[16px] mt-[10px]">
               {/* Move Out Option */}
               <div className="w-full h-[64px] mb-0 relative">
-                <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px]">
-                  <div className="w-[40px] h-[40px] flex items-center justify-center">
-                    <img src="/images/iconss/moveout.svg" alt="Move out" className="w-[40px] h-[40px]" />
+                <Link href="/move-out">
+                  <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px] cursor-pointer hover:bg-gray-50 transition-colors">
+                    <div className="w-[40px] h-[40px] flex items-center justify-center">
+                      <img src="/images/iconss/moveout.svg" alt="Move out" className="w-[40px] h-[40px]" />
+                    </div>
+                    <span className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
+                      Move out
+                    </span>
                   </div>
-                  <Link href="/move-out" className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
-                    Move out
-                  </Link>
-                </div>
+                </Link>
                 <div className="w-full h-0 border-b border-[#ECF0F5]"></div>
               </div>
               
               {/* Personal Details Option */}
               <div className="w-full h-[64px] mb-0 relative">
-                <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px]">
-                  <div className="w-[40px] h-[40px] flex items-center justify-center">
-                    {/* PLACEHOLDER FOR PERSONAL DETAILS ICON - TO BE PROVIDED BY USER */}
-                    <img src="/images/iconss/personaldetails.svg" alt="Personal Details" className="w-[40px] h-[40px]" />
+                <Link href="/profile">
+                  <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px] cursor-pointer hover:bg-gray-50 transition-colors">
+                    <div className="w-[40px] h-[40px] flex items-center justify-center">
+                      {/* PLACEHOLDER FOR PERSONAL DETAILS ICON - TO BE PROVIDED BY USER */}
+                      <img src="/images/iconss/personaldetails.svg" alt="Personal Details" className="w-[40px] h-[40px]" />
+                    </div>
+                    <span className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
+                      Personal Details
+                    </span>
                   </div>
-                  <Link href="/profile" className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
-                    Profile
-                  </Link>
-                </div>
+                </Link>
                 <div className="w-full h-0 border-b border-[#ECF0F5]"></div>
               </div>
               
               {/* Support Option */}
-              <div className="w-full h-[64px] mb-0 relative">
+              <div 
+                className="w-full h-[64px] mb-0 relative cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => window.location.href = 'mailto:support@tenantli.ai'}
+              >
                 <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px]">
                   <div className="w-[40px] h-[40px] flex items-center justify-center">
                     <img src="/images/iconss/support.svg" alt="Support" className="w-[22px] h-[22px]" />
                   </div>
-                  <button 
-                    onClick={() => window.location.href = 'mailto:support@tenantli.ai'}
-                    className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519] text-left"
-                  >
+                  <span className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
                     Support
-                  </button>
+                  </span>
                 </div>
                 <div className="w-full h-0 border-b border-[#ECF0F5]"></div>
               </div>
               
-              {/* Settings Option */}
-              <div className="w-full h-[64px] mb-0 relative">
-                <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px]">
+              {/* Settings Option - Disabled but visible */}
+              <div className="w-full h-[64px] mb-0 relative cursor-not-allowed">
+                <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px] pointer-events-none">
                   <div className="w-[40px] h-[40px] flex items-center justify-center">
                     {/* PLACEHOLDER FOR SETTINGS ICON - TO BE PROVIDED BY USER */}
                    <img src="/images/iconss/settings.svg" alt="Settings" className="w-[40px] h-[40px]" />
                   </div>
-                  <Link href="/profile/settings" className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
+                  <span className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
                     Settings
-                  </Link>
+                  </span>
                 </div>
                 <div className="w-full h-0 border-b border-[#ECF0F5]"></div>
               </div>
               
               {/* Logout Option */}
-              <div className="w-full h-[64px] mb-0 relative">
+              <div 
+                className="w-full h-[64px] mb-0 relative cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  router.push('/login');
+                }}
+              >
                 <div className="flex flex-row items-center p-[12px_0px] gap-[16px] w-full h-[64px]">
                   <div className="w-[40px] h-[40px] flex items-center justify-center">
                     <img src="/images/iconss/logout.svg" alt="Logout" className="w-[22px] h-[22px]" />
                   </div>
-                  <button 
-                    onClick={() => {
-                      localStorage.removeItem('token');
-                      router.push('/login');
-                    }}
-                    className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519] text-left"
-                  >
+                  <span className="font-['Nunito'] font-semibold text-[16px] leading-[22px] text-[#111519]">
                     Log out
-                  </button>
+                  </span>
                 </div>
               </div>
             </div>

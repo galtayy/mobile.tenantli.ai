@@ -15,8 +15,10 @@ router.get('/profile', userController.getProfile);
 router.put(
   '/profile',
   [
-    check('name', 'Ad Soyad gereklidir').not().isEmpty(),
-    check('email', 'Geçerli bir e-posta giriniz').isEmail()
+    check('name', 'Ad Soyad gereklidir').optional().not().isEmpty(),
+    check('email', 'Geçerli bir e-posta giriniz').optional().isEmail(),
+    check('phone', 'Geçerli bir telefon numarası giriniz').optional().not().isEmpty(),
+    check('role', 'Geçerli bir rol giriniz').optional().not().isEmpty()
   ],
   userController.updateProfile
 );

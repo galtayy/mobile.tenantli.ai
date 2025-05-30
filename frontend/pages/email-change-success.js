@@ -30,6 +30,18 @@ export default function EmailChangeSuccess() {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="mobile-web-app-capable" content="yes" />
+        <style>{`
+          body, html {
+            background-color: #FBF5DA;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+          }
+          /* Hide toast notifications on this page */
+          .Toastify__toast-container {
+            display: none !important;
+          }
+        `}</style>
       </Head>
       
       
@@ -102,7 +114,7 @@ export default function EmailChangeSuccess() {
             className="w-full max-w-[350px] h-[56px] flex justify-center items-center bg-[#1C2C40] rounded-[16px] shadow-md"
           >
             <span className="font-bold text-[16px] leading-[22px] text-[#D1E7E2]">
-              Continue to Profile
+              Done
             </span>
           </button>
         </div>

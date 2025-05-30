@@ -171,7 +171,7 @@ const verifyUser = async (userId, code) => {
 
     // Check if codes match
     if (code !== storedCode) {
-      return { success: false, message: 'Invalid verification code' };
+      return { success: false, message: 'Hmm, that code isn’t right. ' };
     }
 
     // Update user to verified status and clear verification code and expiry
