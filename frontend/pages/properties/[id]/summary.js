@@ -501,6 +501,148 @@ export default function PropertySummary() {
 
     loadData();
   }, [id, user, from]);
+
+  // Add listener for page focus to refresh data when coming back from room editing
+  useEffect(() => {
+    const handleFocus = () => {
+      if (id) {
+        console.log('Summary page focused, refreshing data...');
+        // Reload data when page comes into focus
+        const loadData = async () => {
+          try {
+            // Reload photos first
+            try {
+              const photosResponse = await apiService.photos.getByProperty(id);
+              if (photosResponse.data) {
+                console.log("Refreshed property photos from API:", photosResponse.data);
+
+                // Process photos by room
+                const photosByRoom = {};
+
+                // Handle different possible response formats
+                if (Array.isArray(photosResponse.data)) {
+                  // Format 1: Array of photo objects
+                  photosResponse.data.forEach(photo => {
+                    if (photo.room_id) {
+                      if (!photosByRoom[photo.room_id]) {
+                        photosByRoom[photo.room_id] = { photos: [] };
+                      }
+
+                      // Ensure the URL is a complete URL
+                      const fullUrl = photo.url && photo.url.startsWith('/')
+                        ? `${apiService.getBaseUrl()}${photo.url}`
+                        : photo.url;
+
+                      photosByRoom[photo.room_id].photos.push({
+                        ...photo,
+                        url: fullUrl
+                      });
+                    }
+                  });
+                  console.log("Refreshed processed photos by room:", photosByRoom);
+                }
+
+                // Update photos state
+                setRoomPhotos(photosByRoom);
+              }
+            } catch (photoApiError) {
+              console.error("Error refreshing photos from API:", photoApiError);
+            }
+            
+            // Reload rooms from database
+            const roomsResponse = await apiService.properties.getRooms(id);
+            if (roomsResponse.data && Array.isArray(roomsResponse.data)) {
+              console.log("Refreshed rooms from database:", roomsResponse.data);
+              
+              // Merge with localStorage data
+              const savedRooms = localStorage.getItem(`property_${id}_rooms`);
+              let roomsFromLocalStorage = [];
+              
+              if (savedRooms) {
+                try {
+                  roomsFromLocalStorage = JSON.parse(savedRooms);
+                } catch (e) {
+                  console.error("Error parsing rooms from localStorage:", e);
+                }
+              }
+              
+              // Use the same merge logic from loadData
+              if (roomsFromLocalStorage.length > 0) {
+                const dbRoomsMap = {};
+                roomsResponse.data.forEach(room => {
+                  const roomId = room.roomId || room.id;
+                  if (roomId) {
+                    dbRoomsMap[roomId] = room;
+                  }
+                });
+
+                const localRoomsMap = {};
+                roomsFromLocalStorage.forEach(room => {
+                  const roomId = room.roomId || room.id;
+                  if (roomId) {
+                    localRoomsMap[roomId] = room;
+                  }
+                });
+
+                const mergedRooms = [];
+                const allRoomIds = [...new Set([
+                  ...Object.keys(dbRoomsMap),
+                  ...Object.keys(localRoomsMap)
+                ])];
+
+                allRoomIds.forEach(roomId => {
+                  const dbRoom = dbRoomsMap[roomId];
+                  const localRoom = localRoomsMap[roomId];
+
+                  if (dbRoom && localRoom) {
+                    const dbTimestamp = dbRoom.timestamp || dbRoom.lastUpdated || '';
+                    const localTimestamp = localRoom.timestamp || localRoom.lastUpdated || '';
+
+                    if (localTimestamp > dbTimestamp) {
+                      mergedRooms.push(localRoom);
+                    } else {
+                      mergedRooms.push(dbRoom);
+                    }
+                  } else if (dbRoom) {
+                    mergedRooms.push(dbRoom);
+                  } else if (localRoom) {
+                    mergedRooms.push(localRoom);
+                  }
+                });
+
+                console.log("Refreshed merged rooms:", mergedRooms);
+                setRooms(mergedRooms);
+                localStorage.setItem(`property_${id}_rooms`, JSON.stringify(mergedRooms));
+              } else {
+                console.log("Using refreshed rooms from database only");
+                setRooms(roomsResponse.data);
+                localStorage.setItem(`property_${id}_rooms`, JSON.stringify(roomsResponse.data));
+              }
+            }
+          } catch (error) {
+            console.error("Error refreshing room data:", error);
+          }
+        };
+        
+        loadData();
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && id) {
+        console.log('Summary page visible, refreshing data...');
+        handleFocus();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [id]);
   
   // Handle sharing walkthrough
   const handleCreateReport = async () => {

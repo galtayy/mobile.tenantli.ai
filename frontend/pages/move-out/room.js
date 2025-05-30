@@ -1361,6 +1361,16 @@ export default function MoveOutRoom() {
                   <textarea
                     value={currentNote}
                     onChange={(e) => setCurrentNote(e.target.value)}
+                    onFocus={(e) => {
+                      // Scroll to textarea when keyboard opens
+                      setTimeout(() => {
+                        e.target.scrollIntoView({ 
+                          behavior: 'smooth', 
+                          block: 'center',
+                          inline: 'nearest'
+                        });
+                      }, 300);
+                    }}
                     placeholder="e.g., minor wear and tear on walls"
                     className="w-full h-[74px] p-[18px_20px] bg-white border border-[#D1E7D5] rounded-[16px] font-semibold text-[14px] leading-[19px] text-[#515964] resize-none"
                     maxLength={150}
@@ -1414,8 +1424,8 @@ export default function MoveOutRoom() {
           </div>
           
           {/* Fixed bottom button */}
-          <div className="fixed bottom-0 left-0 right-0 px-5 pb-4 bg-[#FBF5DA] z-10">
-              <div className="safe-area-bottom">
+          <div className="fixed bottom-0 left-0 right-0 px-5 pb-4 bg-[#FBF5DA] z-10" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
+              <div>
                 {isReadOnly ? (
                   <button
                     onClick={() => router.push(returnUrl || `/properties/${propertyId}/summary?from=walkthrough`)}

@@ -42,13 +42,37 @@ export default function MoveOutRooms() {
     
     try {
       console.log(`Fetching photos for room ${roomId}`);
-      const photosResponse = await apiService.photos.getByRoom(propertyId, roomId);
+      // Fetch both move-in and move-out photos
+      const moveInPhotosResponse = await apiService.photos.getByRoom(propertyId, roomId, false); // move_out = false
+      const moveOutPhotosResponse = await apiService.photos.getByRoom(propertyId, roomId, true); // move_out = true
       
-      if (photosResponse.data && photosResponse.data.length > 0) {
-        console.log(`Found ${photosResponse.data.length} photos for room ${roomId}`);
+      let allPhotos = [];
+      
+      if (moveInPhotosResponse.data && moveInPhotosResponse.data.length > 0) {
+        console.log(`Found ${moveInPhotosResponse.data.length} move-in photos for room ${roomId}`);
+        allPhotos = [...allPhotos, ...moveInPhotosResponse.data];
+      }
+      
+      if (moveOutPhotosResponse.data && moveOutPhotosResponse.data.length > 0) {
+        console.log(`Found ${moveOutPhotosResponse.data.length} move-out photos for room ${roomId}`);
+        allPhotos = [...allPhotos, ...moveOutPhotosResponse.data];
         
+        // Update localStorage with latest move-out photo count
+        const savedRooms = JSON.parse(localStorage.getItem(`property_${propertyId}_rooms`) || '[]');
+        const roomIndex = savedRooms.findIndex(r => r.roomId === roomId);
+        
+        if (roomIndex >= 0) {
+          savedRooms[roomIndex].moveOutPhotoCount = moveOutPhotosResponse.data.length;
+          savedRooms[roomIndex].moveOutCompleted = moveOutPhotosResponse.data.length > 0 || 
+                                                  (savedRooms[roomIndex].moveOutNotes && savedRooms[roomIndex].moveOutNotes.length > 0);
+          localStorage.setItem(`property_${propertyId}_rooms`, JSON.stringify(savedRooms));
+          console.log(`Updated room ${roomId} photo count to ${moveOutPhotosResponse.data.length}`);
+        }
+      }
+      
+      if (allPhotos.length > 0) {
         // Get the first 4 photos for thumbnails
-        const thumbnails = photosResponse.data.slice(0, 4).map(photo => {
+        const thumbnails = allPhotos.slice(0, 4).map(photo => {
           return {
             id: photo.id,
             src: apiService.getPhotoUrl(photo) || ''
@@ -152,6 +176,23 @@ export default function MoveOutRooms() {
           const savedRoom = savedRooms.find(saved => saved.roomId === room.roomId);
           console.log('Move-out/rooms - Found saved room:', savedRoom);
           
+          // Get move-out photo count from API as well
+          let moveOutPhotoCount = 0;
+          if (savedRoom?.moveOutPhotoCount > 0) {
+            moveOutPhotoCount = savedRoom.moveOutPhotoCount;
+          } else if (room.moveOutPhotoCount > 0) {
+            moveOutPhotoCount = room.moveOutPhotoCount;
+          }
+
+          // Check if move-out is completed based on any available data
+          const hasNotes = (savedRoom?.moveOutNotes && savedRoom.moveOutNotes.length > 0) || 
+                          (room.moveOutNotes && room.moveOutNotes.length > 0);
+          const hasPhotos = moveOutPhotoCount > 0;
+          const moveOutCompleted = savedRoom?.moveOutCompleted || 
+                                  room.moveOutCompleted || 
+                                  hasNotes || 
+                                  hasPhotos;
+          
           // Backend returns camelCase field names
           const formattedRoom = {
             id: room.roomId,
@@ -161,13 +202,20 @@ export default function MoveOutRooms() {
             movein_items_noted: room.roomIssueNotes ? room.roomIssueNotes.length : 0,
             room_quality: room.roomQuality || null,
             roomIssueNotes: room.roomIssueNotes || [],
-            // Move-out specific fields from localStorage or API
+            // Move-out specific fields - prefer localStorage data, fallback to API
             moveOutNotes: savedRoom?.moveOutNotes || room.moveOutNotes || [],
-            moveOutPhotoCount: savedRoom?.moveOutPhotoCount || room.moveOutPhotoCount || 0,
+            moveOutPhotoCount: moveOutPhotoCount,
             moveOutDate: savedRoom?.moveOutDate || room.moveOutDate,
-            moveOutCompleted: savedRoom?.moveOutCompleted || room.moveOutCompleted || false
+            moveOutCompleted: moveOutCompleted
           };
           console.log('Move-out/rooms - Formatted room:', formattedRoom);
+          console.log('Move-out/rooms - Move-out status:', {
+            hasNotes,
+            hasPhotos,
+            moveOutCompleted,
+            noteCount: formattedRoom.moveOutNotes.length,
+            photoCount: moveOutPhotoCount
+          });
           return formattedRoom;
         });
         setRooms(formattedRooms);
@@ -199,14 +247,64 @@ export default function MoveOutRooms() {
       checkReportStatus(propertyId);
     }
   }, [user, loading, router, propertyId, router.isReady, fetchPropertyData, checkReportStatus]);
+
+  // Add listener for page focus to refresh data when coming back from room editing
+  useEffect(() => {
+    const handleFocus = () => {
+      if (propertyId) {
+        console.log('Page focused, refreshing room data...');
+        fetchPropertyData(propertyId);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden && propertyId) {
+        console.log('Page visible, refreshing room data...');
+        fetchPropertyData(propertyId);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [propertyId, fetchPropertyData]);
   
   // Fetch photos when rooms are loaded
   useEffect(() => {
     if (rooms.length > 0) {
-      fetchAllRoomPhotos(rooms);
+      fetchAllRoomPhotos(rooms).then(() => {
+        // After fetching photos, update room states with new photo counts
+        const updatedRooms = rooms.map(room => {
+          const savedRooms = JSON.parse(localStorage.getItem(`property_${propertyId}_rooms`) || '[]');
+          const savedRoom = savedRooms.find(saved => saved.roomId === room.id);
+          
+          if (savedRoom && (savedRoom.moveOutPhotoCount !== room.moveOutPhotoCount || savedRoom.moveOutCompleted !== room.moveOutCompleted)) {
+            return {
+              ...room,
+              moveOutPhotoCount: savedRoom.moveOutPhotoCount || room.moveOutPhotoCount,
+              moveOutCompleted: savedRoom.moveOutCompleted || room.moveOutCompleted
+            };
+          }
+          return room;
+        });
+        
+        // Only update if there are actual changes
+        const hasChanges = updatedRooms.some((updatedRoom, index) => 
+          updatedRoom.moveOutPhotoCount !== rooms[index].moveOutPhotoCount ||
+          updatedRoom.moveOutCompleted !== rooms[index].moveOutCompleted
+        );
+        
+        if (hasChanges) {
+          setRooms(updatedRooms);
+        }
+      });
       checkAllRoomsCompleted();
     }
-  }, [rooms, fetchAllRoomPhotos, checkAllRoomsCompleted]);
+  }, [rooms.length]); // Only depend on room count to avoid infinite loops
   
   const getRoomStatus = (room) => {
     // First check if move-out is completed (has photos and notes)

@@ -1140,6 +1140,16 @@ export default function MoveOutRoom() {
                   <textarea
                     value={currentNote}
                     onChange={(e) => setCurrentNote(e.target.value)}
+                    onFocus={(e) => {
+                      // Scroll to textarea when keyboard opens
+                      setTimeout(() => {
+                        e.target.scrollIntoView({ 
+                          behavior: 'smooth', 
+                          block: 'center',
+                          inline: 'nearest'
+                        });
+                      }, 300);
+                    }}
                     placeholder="e.g., minor wear and tear on walls"
                     className="w-full h-[74px] p-[18px_20px] bg-white border border-[#D1E7D5] rounded-[16px] font-semibold text-[14px] leading-[19px] text-[#515964] resize-none"
                     maxLength={150}
