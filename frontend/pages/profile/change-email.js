@@ -166,10 +166,6 @@ export default function ChangeEmail() {
           >
             {isSubmitting ? 'Sending...' : 'Send Code'}
           </button>
-          {/* Bottom indicator line */}
-          <div className="flex justify-center mt-[12px]">
-            <div className="w-[138px] h-[4px] bg-[#1C2C40] rounded-[24px]"></div>
-          </div>
         </div>
       </div>
     </div>
